@@ -356,8 +356,8 @@ html,body{background:var(--bg);color:var(--txt);font-family:'PingFang SC','Helve
 // min = 属性条变红的阈值（危险线），死亡线在 checkDeath 里单独设置（更低）
 // 梯度：min变红（危险）→ 文字警告（告急）→ checkDeath死亡
 var ATTRS = [
-  {k:'leaderLike', ic:'👔', lb:'领导满意度', cl:'#0099ff', min:40},  // 死亡线20，危险线40
-  {k:'output',     ic:'📈', lb:'个人产出值', cl:'#00ffcc', min:35},  // 死亡线20，危险线35
+  {k:'leaderLike', ic:'👔', lb:'领导满意度', cl:'#0099ff', min:28},  // 死亡线20，危险线28（初始值30，留缓冲）
+  {k:'output',     ic:'📈', lb:'个人产出值', cl:'#00ffcc', min:25},  // 死亡线20，危险线25（初始值30，留缓冲）
   {k:'physique',   ic:'💪', lb:'体质值',     cl:'#00cc66', min:30},  // 死亡线0，危险线30
   {k:'mental',     ic:'😊', lb:'心情',       cl:'#9933ff', min:30},  // 死亡线0，危险线30
   {k:'social',     ic:'🤝', lb:'同事好感',   cl:'#ff9900', min:15},
@@ -1060,12 +1060,12 @@ function checkDeath(){
 
 function getWarnings(){
   var p = gs.p, w = [];
-  // 领导满意度（死亡线20）：3级预警
+  // 领导满意度（死亡线20）：3级预警（初始值30，留足缓冲）
   if(p.leaderLike < 22 && !p.buffs.alliance)
     w.push('🚨 【即将被裁！】领导满意度触底，下一步可能被叫去小会议室');
-  else if(p.leaderLike < 32 && !p.buffs.alliance)
+  else if(p.leaderLike < 26 && !p.buffs.alliance)
     w.push('⚠️ 领导满意度告急，再跌就要被裁了');
-  else if(p.leaderLike < 40)
+  else if(p.leaderLike < 30)
     w.push('📉 领导满意度偏低，注意维护关系');
   // 个人产出（死亡线20）：2级预警
   if(p.output < 22)
