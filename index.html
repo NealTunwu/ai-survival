@@ -1221,7 +1221,10 @@ function execAction(actionId){
     var rp = action.ai ? aiRisk(action.risk.p) : getBaseRisk(action.risk.p);
     if(Math.random() < rp){
       result.riskHit = true; result.riskDesc = action.risk.d;
-      if(action.rfx) applyFx(action.rfx);
+      if(action.rfx){
+        var rfxChanges = applyFx(action.rfx);
+        result.changes = result.changes.concat(rfxChanges); // 合并到显示列表
+      }
     }
   }
   if(action.ai){
@@ -1247,7 +1250,10 @@ function resolveEvOpt(event, idx){
     var rp = opt.ai ? aiRisk(opt.risk.p) : getBaseRisk(opt.risk.p);
     if(Math.random() < rp){
       result.riskHit = true; result.riskDesc = opt.risk.d;
-      if(opt.rfx) applyFx(opt.rfx);
+      if(opt.rfx){
+        var rfxChanges = applyFx(opt.rfx);
+        result.changes = result.changes.concat(rfxChanges); // 合并到显示列表
+      }
     }
   }
   if(opt.ai){
