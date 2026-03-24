@@ -1072,12 +1072,14 @@ function getWarnings(){
     w.push('🚨 【即将被裁！】产出极低，已被列为裁员重点对象');
   else if(p.output < 30)
     w.push('⚠️ 产出值告急，继续下降将触发裁员');
-  // 对抗AI值（第6天后死亡线10）：2级预警
-  if(gs.day >= 5){
-    if(p.antiAI < 12 && !p.buffs.alliance)
+  // 对抗AI值：3级预警（finalSettle死亡线<20，第3天起开始提醒）
+  if(!p.buffs.alliance){
+    if(p.antiAI < 12)
       w.push('🚨 【即将被裁！】对抗AI值极低，AI已经可以完全替代你');
     else if(p.antiAI < 20)
-      w.push('⚠️ 对抗AI值危险，你正在变成最容易被替代的人');
+      w.push('🚨 【高危】对抗AI值不足20，第15天结算将直接被裁');
+    else if(p.antiAI < 28 && gs.day >= 3)
+      w.push('⚠️ 对抗AI值偏低，提升硬实力才能通关');
   }
   // 体质（死亡线0）：2级预警
   if(p.physique < 10)
@@ -1276,7 +1278,11 @@ function advanceSlot(){
     dailyDecay();
     gs.day++;
     var dead = checkDeath();
-    if(dead && !gs.over){ triggerEnding(dead); return; }
+    if(dead && !gs.over){
+      triggerEnding(dead);
+      // 不立即跳转，让 syncUI 检测到 gs.over 后显示属性面板再延迟跳结局
+      return;
+    }
   }
   gs.pendFixed = checkFixed();
   if(!gs.pendFixed && Math.random() < 0.35){
