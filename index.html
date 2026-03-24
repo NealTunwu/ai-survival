@@ -680,11 +680,11 @@ var ENDINGS = {
     sub:'不是被裁的，是因为太穷待不下去的。',
     quote:'工资太低，是比裁员更残酷的逐客令。'},
   replaced:{type:'fail',title:'🤖 被AI完全替代',emoji:'🤖',
-    desc:'那天会议室的屏幕上出现了一个新的工位牌——是一个AI助手的名字，就放在你旁边。\\n\\n一周后，你发现自己的工作全部被它接管了。你还在公司，但没有人再给你发任务。\\n\\n又过了三天，HR找你谈话，说这是「岗位优化」，不是裁员。\\n\\n你收拾东西走出去，回头看了一眼那个屏幕，它还在认真工作。',
+    desc:'那天会议室的屏幕上出现了一个新的工位牌——是一个AI助手的名字，就放在你旁边。\n\n一周后，你发现自己的工作全部被它接管了。你还在公司，但没有人再给你发任务。\n\n又过了三天，HR找你谈话，说这是「岗位优化」，不是裁员。\n\n你收拾东西走出去，回头看了一眼那个屏幕，它还在认真工作。',
     sub:'不是被开除的，是被「进化」掉的。',
     quote:'有一种裁员，叫你还在，但你已经不重要了。'},
   burnout:{type:'fail',title:'🔥 过劳发疯',emoji:'🌋',
-    desc:'那天下午，你在工位上盯着屏幕，突然什么都不想做了。\\n\\n你站起来，把键盘推到地上，大声说了一句话，整个办公室都安静了。\\n\\n你不记得说了什么，只记得走出大楼时阳光很刺眼，手机一直在震动，你把它关了。\\n\\n医生说这叫「职业倦怠性情绪崩溃」。你管它叫——终于解脱。',
+    desc:'那天下午，你在工位上盯着屏幕，突然什么都不想做了。\n\n你站起来，把键盘推到地上，大声说了一句话，整个办公室都安静了。\n\n你不记得说了什么，只记得走出大楼时阳光很刺眼，手机一直在震动，你把它关了。\n\n医生说这叫「职业倦怠性情绪崩溃」。你管它叫——终于解脱。',
     sub:'精神比身体先到达了极限。',
     quote:'有些崩溃，不是软弱，是身体在替你做决定。'},
   resign:{type:'fail',title:'🚪 主动出走',emoji:'🏃',
@@ -1499,7 +1499,7 @@ function renderResult(eid){
   document.getElementById('re-typewrap').innerHTML = '<span class="retag '+typeCls+'">'+typeLbl+'</span>';
   document.getElementById('re-emoji').textContent = e.emoji;
   document.getElementById('re-title').textContent = e.title;
-  document.getElementById('re-desc').textContent = e.desc;
+  document.getElementById('re-desc').innerHTML = e.desc.replace(/\n/g,'<br>');
   document.getElementById('re-sub').textContent = e.sub;
   document.getElementById('re-quote').textContent = '「'+e.quote+'」';
   document.getElementById('re-stats').innerHTML = ATTRS.map(function(c){
