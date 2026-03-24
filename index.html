@@ -679,6 +679,14 @@ var ENDINGS = {
     desc:'你的月薪已经降到5000以下，连房租都付不起了。无奈之下，你只能主动离职，另寻出路。',
     sub:'不是被裁的，是因为太穷待不下去的。',
     quote:'工资太低，是比裁员更残酷的逐客令。'},
+  replaced:{type:'fail',title:'🤖 被AI完全替代',emoji:'🤖',
+    desc:'那天会议室的屏幕上出现了一个新的工位牌——是一个AI助手的名字，就放在你旁边。\\n\\n一周后，你发现自己的工作全部被它接管了。你还在公司，但没有人再给你发任务。\\n\\n又过了三天，HR找你谈话，说这是「岗位优化」，不是裁员。\\n\\n你收拾东西走出去，回头看了一眼那个屏幕，它还在认真工作。',
+    sub:'不是被开除的，是被「进化」掉的。',
+    quote:'有一种裁员，叫你还在，但你已经不重要了。'},
+  burnout:{type:'fail',title:'🔥 过劳发疯',emoji:'🌋',
+    desc:'那天下午，你在工位上盯着屏幕，突然什么都不想做了。\\n\\n你站起来，把键盘推到地上，大声说了一句话，整个办公室都安静了。\\n\\n你不记得说了什么，只记得走出大楼时阳光很刺眼，手机一直在震动，你把它关了。\\n\\n医生说这叫「职业倦怠性情绪崩溃」。你管它叫——终于解脱。',
+    sub:'精神比身体先到达了极限。',
+    quote:'有些崩溃，不是软弱，是身体在替你做决定。'},
   resign:{type:'fail',title:'🚪 主动出走',emoji:'🏃',
     desc:'你提交了离职申请。也许是主动，也许是被逼的，总之你先迈出了那一步。外面的世界，未必比里面更好，但至少是你自己选的。',
     sub:'不算失败，只是换了一个战场。',
@@ -1033,12 +1041,20 @@ function dailyDecay(){
 
 function checkDeath(){
   var p = gs.p;
-  if(p.physique <= 0)  return 'overwork';
-  if(p.mental <= 0)    return 'breakdown';
+  // ① 体质归零 → 过劳猝死
+  if(p.physique <= 0) return 'overwork';
+  // ② 心情归零 → 精神崩溃（发疯）
+  if(p.mental <= 0) return 'burnout';
+  // ③ 对抗AI值归零 → 直接被AI完全替代（无论第几天）
+  if(p.antiAI <= 0 && !p.buffs.alliance) return 'replaced';
+  // ④ 对抗AI值过低（第8天后）→ 被裁
+  if(p.antiAI < 10 && gs.day >= 8 && !p.buffs.alliance) return 'fired';
+  // ⑤ 领导满意度过低 → 被裁
   if(p.leaderLike < 20 && !p.buffs.alliance) return 'fired';
-  if(p.output < 20)    return 'fired';
-  if(p.antiAI < 10 && gs.day >= 8 && !p.buffs.alliance) return 'fired'; // 第8天后AI值太低被裁
-  if(p.salary <= 5)    return 'poorpay';
+  // ⑥ 产出过低 → 被裁
+  if(p.output < 20) return 'fired';
+  // ⑦ 薪资归零 → 穷走
+  if(p.salary <= 5) return 'poorpay';
   return null;
 }
 
