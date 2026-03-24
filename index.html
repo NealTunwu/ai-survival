@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AI寒冬裁员生存模拟器</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --cyan:#00ffcc;--blue:#0099ff;--red:#ff3366;--yellow:#ffcc00;
+  --purple:#9933ff;--orange:#ff9900;--green:#00cc66;--gold:#ffd700;
+  --bg:#0a0a1a;--card:rgba(15,15,40,0.97);--txt:#e0e0ff;--dim:rgba(224,224,255,0.6);
+}
+html,body{background:var(--bg);color:var(--txt);font-family:'PingFang SC','Helvetica Neue',sans-serif;min-height:100vh;overflow-x:hidden}
+.wrap{max-width:430px;margin:0 auto;min-height:100vh;background:var(--bg)}
+
+/* ---- 通用 ---- */
+.page{display:none}
+.page.on{display:block}
+.card{background:var(--card);border:1px solid rgba(0,255,204,.2);border-radius:14px;padding:16px;margin-bottom:12px}
+.btn{display:block;width:100%;padding:15px;border-radius:10px;font-size:15px;font-weight:700;text-align:center;border:none;cursor:pointer;outline:none;transition:opacity .15s,transform .1s;-webkit-appearance:none;margin-bottom:0}
+.btn:active{opacity:.75;transform:scale(.97)}
+.bp{background:linear-gradient(135deg,#00ffcc,#0099ff);color:#0a0a1a}
+.bg-{background:transparent;border:2px solid rgba(0,255,204,.4);color:#00ffcc}
+.bd{background:linear-gradient(135deg,#ff3366,#cc0033);color:#fff}
+.bx{background:rgba(255,255,255,.07);color:rgba(255,255,255,.3);cursor:not-allowed}
+.neon{color:#00ffcc;text-shadow:0 0 8px #00ffcc}
+.nred{color:#ff3366;text-shadow:0 0 6px #ff3366}
+.nyel{color:#ffcc00}
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,204,.3),transparent);margin:12px 0}
+.pbar{flex:1;height:9px;border-radius:5px;background:rgba(255,255,255,.1);overflow:hidden}
+.pfill{height:100%;border-radius:5px;transition:width .4s}
+.tag{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;margin:2px;border:1px solid}
+.tc{background:rgba(0,255,204,.1);border-color:rgba(0,255,204,.4);color:#00ffcc}
+.tr{background:rgba(255,51,102,.1);border-color:rgba(255,51,102,.4);color:#ff3366}
+.ty{background:rgba(255,204,0,.1);border-color:rgba(255,204,0,.4);color:#ffcc00}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.pulse{animation:pulse 2s infinite}
+@keyframes glitch{0%,90%,100%{transform:translateX(0)}92%{transform:translateX(-3px)}94%{transform:translateX(3px)}96%{transform:translateX(-2px)}}
+.glitch{animation:glitch 3s infinite}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fadein .3s ease forwards}
+
+/* ---- 首页 ---- */
+#pg-home{
+  background:radial-gradient(ellipse at 50% 20%,rgba(0,255,204,.07) 0%,transparent 60%),
+             radial-gradient(ellipse at 80% 80%,rgba(153,51,255,.07) 0%,transparent 60%),var(--bg);
+  min-height:100vh;flex-direction:column;align-items:center;justify-content:center
+}
+#pg-home.on{display:flex}
+.home-inner{padding:32px 24px;width:100%;text-align:center}
+.home-logo{font-size:68px;margin-bottom:6px}
+.home-title{font-size:24px;font-weight:900;color:#fff;letter-spacing:1px;margin-bottom:4px}
+.home-sub{font-size:13px;color:rgba(0,255,204,.7);margin-bottom:6px}
+.home-desc{font-size:12px;color:var(--dim);line-height:1.7;margin-bottom:24px}
+.home-badges{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin-bottom:28px}
+.home-badges span{background:rgba(0,255,204,.1);border:1px solid rgba(0,255,204,.3);border-radius:20px;padding:3px 10px;color:#00ffcc;font-size:12px}
+.home-btns{display:flex;flex-direction:column;gap:10px}
+.home-footer{margin-top:24px;font-size:11px;color:rgba(224,224,255,.2);line-height:2}
+
+/* ---- 角色创建 ---- */
+#pg-create{padding:14px 14px 100px}
+.ph{margin-bottom:16px}
+.pt{font-size:21px;font-weight:900;color:#00ffcc;text-shadow:0 0 10px #00ffcc;display:block}
+.ps{font-size:13px;color:var(--dim)}
+.stitle{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.si{font-size:17px}
+.sl{font-size:15px;font-weight:700;color:#fff}
+.ptbar{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0;margin-bottom:10px}
+.ptlbl{font-size:14px;color:var(--dim)}
+.ptval{font-size:34px;font-weight:900}
+.ptunit{font-size:14px;color:var(--dim)}
+/* 难度 */
+.drow{display:flex;gap:8px;margin-bottom:0}
+.ditem{flex:1;text-align:center;padding:10px 4px;border:2px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.03)}
+.ditem.sel{border-color:#00ffcc;background:rgba(0,255,204,.08)}
+.ditem.selh{border-color:#ff3366!important;background:rgba(255,51,102,.08)!important}
+.de{font-size:20px;display:block;margin-bottom:2px}
+.dn{font-size:12px;font-weight:700;color:#fff;display:block}
+.dp{font-size:11px;color:#00ffcc;display:block}
+.dd{font-size:10px;color:var(--dim);display:block}
+/* 出身 */
+.tg{margin-bottom:14px}
+.gn{font-size:13px;color:var(--dim);display:block;margin-bottom:7px}
+.tlist{display:flex;flex-direction:column;gap:7px}
+.oi{padding:11px 13px;border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.02)}
+.oi.sel{border-color:#00ffcc;background:rgba(0,255,204,.06)}
+.oi.dis{opacity:.4;cursor:not-allowed}
+.oh{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.on{font-size:14px;font-weight:700;color:#fff}
+.oc{font-size:13px;font-weight:700;color:#ff3366}
+.oc.free{color:#00cc66}
+.od{font-size:12px;color:var(--dim);display:block;margin-bottom:2px}
+.oe{font-size:11px;color:#00ffcc;display:block}
+/* 天赋 */
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.ti{padding:10px 8px;border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;transition:all .2s;text-align:center;background:rgba(255,255,255,.02)}
+.ti.sel{border-color:#00ffcc!important;background:rgba(0,255,204,.12)!important;box-shadow:0 0 16px rgba(0,255,204,.25)!important;transform:scale(1.02)}
+.ti.dis{opacity:.4;cursor:not-allowed}
+.te{font-size:20px;display:block;margin-bottom:2px}
+.tn{font-size:12px;font-weight:700;color:#fff;display:block}
+.tco{font-size:11px;color:#ff3366;display:block}
+.tef{font-size:10px;color:var(--dim);display:block;margin-top:3px;line-height:1.4}
+/* 属性预览 */
+.ar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.al{font-size:12px;color:var(--dim);width:88px;flex-shrink:0}
+.av{font-size:13px;font-weight:700;width:36px;text-align:right;flex-shrink:0}
+
+/* ---- 游戏主界面 ---- */
+#pg-game{padding:12px 12px 100px}
+.sbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:12px;background:rgba(0,255,204,.04);border:1px solid rgba(0,255,204,.15);border-radius:10px}
+.dinfo{display:flex;align-items:baseline;gap:2px}
+.dlbl{font-size:13px;color:var(--dim)}
+.dnum{font-size:38px;font-weight:900;color:#00ffcc;line-height:1;text-shadow:0 0 12px rgba(0,255,204,.6)}
+.dsl{font-size:12px;color:rgba(224,224,255,.3)}
+.sbadge{display:flex;align-items:center;gap:5px;padding:5px 13px;border-radius:20px;border:1px solid}
+.sm{border-color:#ffcc00;background:rgba(255,204,0,.1)}
+.sa{border-color:#ff9900;background:rgba(255,153,0,.1)}
+.sn{font-size:13px;font-weight:700}
+.sbtn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:16px;background:rgba(255,255,255,.05);border-radius:50%;border:1px solid rgba(255,255,255,.1);cursor:pointer}
+.agrid{display:flex;flex-direction:column;gap:7px}
+.arow{display:flex;align-items:center;gap:6px}
+.arow.warn .aname,.arow.warn .anum{color:#ff3366}
+.aicon{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.aname{font-size:12px;color:var(--dim);width:72px;flex-shrink:0}
+.anum{font-size:13px;font-weight:700;width:32px;text-align:right;flex-shrink:0}
+.wbox{margin-bottom:10px}
+.wi{background:rgba(255,51,102,.1);border:1px solid rgba(255,51,102,.35);border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:13px;color:#ff3366;font-weight:700}
+.brow{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.atip{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.atxt{font-size:16px;font-weight:700;color:#fff}
+.asub{font-size:13px;color:var(--dim)}
+.ctabs{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px}
+.ctabs::-webkit-scrollbar{display:none}
+.ctab{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:13px;border:1px solid rgba(255,255,255,.15);color:rgba(224,224,255,.55);cursor:pointer;transition:all .2s;white-space:nowrap;background:none}
+.ctab.on{font-weight:700}
+.alist{display:flex;flex-direction:column;gap:10px}
+.ait{padding:13px;cursor:pointer;transition:all .15s;margin-bottom:0}
+.ait:active{transform:scale(.97);opacity:.85}
+.aih{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.aie{font-size:20px}
+.ain{font-size:14px;font-weight:700;color:#fff;flex:1}
+.aibadge{background:rgba(255,51,102,.15);border:1px solid rgba(255,51,102,.35);border-radius:12px;padding:2px 8px;font-size:11px;color:#ff3366;flex-shrink:0}
+.aid{font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:7px}
+.aieffs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px}
+.ep{font-size:11px;padding:2px 8px;border-radius:12px;background:rgba(0,204,102,.1);border:1px solid rgba(0,204,102,.3);color:#00cc66}
+.en{font-size:11px;padding:2px 8px;border-radius:12px;background:rgba(255,51,102,.15);border:1px solid rgba(255,51,102,.4);color:#ff3366;font-weight:700}
+.risk{font-size:11px;color:#ff9900}
+
+/* ---- 弹层 ---- */
+.overlay{position:fixed;top:0;left:50%;transform:translateX(-50%);width:430px;max-width:100vw;height:100vh;background:rgba(8,8,20,.93);display:flex;align-items:center;justify-content:center;padding:24px 16px;z-index:200;overflow-y:auto}
+.ov-inner{width:100%;max-height:88vh;overflow-y:auto}
+.ov-card{background:linear-gradient(135deg,rgba(15,15,42,.99),rgba(10,10,26,.99));border:2px solid rgba(0,255,204,.35);border-radius:16px;padding:22px;box-shadow:0 0 60px rgba(0,255,204,.15)}
+.evhd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:10px}
+.evt{font-size:17px;font-weight:900;color:#fff;flex:1;line-height:1.4}
+.evtag{flex-shrink:0;padding:3px 10px;border-radius:14px;font-size:11px}
+.evf{background:rgba(255,204,0,.12);border:1px solid rgba(255,204,0,.35);color:#ffcc00}
+.evr{background:rgba(0,153,255,.12);border:1px solid rgba(0,153,255,.35);color:#0099ff}
+.evdesc{font-size:14px;color:rgba(224,224,255,.85);line-height:1.8;margin-bottom:16px;display:block}
+.evopts{display:flex;flex-direction:column;gap:10px}
+.evopt{display:flex;align-items:flex-start;gap:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:13px;cursor:pointer;transition:all .2s}
+.evopt:active{border-color:#00ffcc;background:rgba(0,255,204,.07)}
+.evoem{font-size:20px;flex-shrink:0}
+.evoc{flex:1}
+.evotxt{font-size:14px;font-weight:700;color:#fff;display:block;margin-bottom:4px}
+.evoeffs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:3px}
+.evoep{font-size:11px;padding:2px 7px;border-radius:10px;background:rgba(0,204,102,.1);border:1px solid rgba(0,204,102,.3);color:#00cc66}
+.evoen{font-size:11px;padding:2px 7px;border-radius:10px;background:rgba(255,51,102,.15);border:1px solid rgba(255,51,102,.4);color:#ff3366;font-weight:700}
+.evork{font-size:11px;color:#ff9900;display:block}
+/* 结果弹层 */
+.restit{font-size:13px;color:var(--dim);display:block;margin-bottom:3px}
+.resact{font-size:20px;font-weight:900;color:#fff;display:block;margin-bottom:5px}
+.resdesc{font-size:13px;color:var(--dim);line-height:1.7;display:block;margin-bottom:12px}
+.effslist{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.efc{display:flex;align-items:center;gap:4px;padding:5px 11px;border-radius:12px;font-size:12px}
+.efc.pos{background:rgba(0,204,102,.1);border:1px solid rgba(0,204,102,.35);color:#00cc66}
+.efc.neg{background:rgba(255,51,102,.1);border:1px solid rgba(255,51,102,.35);color:#ff3366}
+.efcl{color:rgba(224,224,255,.6)}
+.efcv{font-weight:700}
+.riskalert{display:flex;align-items:flex-start;gap:10px;background:rgba(255,153,0,.1);border:1px solid rgba(255,153,0,.35);border-radius:8px;padding:11px;margin-bottom:11px;font-size:13px;color:#ff9900}
+.logbox{background:rgba(0,255,204,.04);border:1px solid rgba(0,255,204,.18);border-radius:8px;padding:10px 13px;margin-bottom:11px}
+.logitem{font-size:12px;color:#00ffcc;display:block;padding:2px 0}
+
+/* ---- 结局页 ---- */
+#pg-result{padding:20px 16px 60px}
+.rdeco{text-align:center;font-size:11px;color:rgba(0,255,204,.3);letter-spacing:4px;margin-bottom:12px;font-family:monospace}
+.retag{display:inline-block;padding:5px 16px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:14px}
+.ef{background:rgba(255,51,102,.15);border:1px solid rgba(255,51,102,.4);color:#ff3366}
+.en2{background:rgba(0,153,255,.15);border:1px solid rgba(0,153,255,.4);color:#0099ff}
+.ep2{background:rgba(255,204,0,.15);border:1px solid rgba(255,204,0,.4);color:#ffcc00}
+.eh{background:rgba(0,255,204,.15);border:1px solid rgba(0,255,204,.4);color:#00ffcc}
+.remain{text-align:center;margin-bottom:18px}
+.rebig{font-size:78px;display:block;margin-bottom:6px}
+.retitle{font-size:25px;font-weight:900;color:#fff;display:block}
+.redes{font-size:14px;color:rgba(224,224,255,.9);line-height:1.9;display:block}
+.resub{font-size:13px;color:#00ffcc;font-style:italic;display:block}
+.stlbl{font-size:14px;font-weight:700;color:var(--dim);display:block;margin-bottom:10px}
+.strow{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.stic{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.stn{font-size:12px;color:var(--dim);width:72px;flex-shrink:0}
+.stv{font-size:13px;font-weight:700;width:32px;text-align:right;flex-shrink:0}
+.actl{font-size:14px;font-weight:700;color:var(--dim);display:block;margin-bottom:8px}
+.acit{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.ace{font-size:20px}
+.acn{font-size:14px;font-weight:700;color:#fff;display:block}
+.acd{font-size:12px;color:var(--dim)}
+.mstgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mst{background:rgba(255,255,255,.03);border-radius:8px;padding:10px;text-align:center}
+.mstl{font-size:11px;color:var(--dim);display:block;margin-bottom:3px}
+.mstv{font-size:14px;font-weight:700;color:#fff;display:block}
+.qbox{text-align:center;padding:14px;margin-top:8px}
+.qt{font-size:13px;color:rgba(224,224,255,.4);font-style:italic;line-height:1.7}
+.bgrp{display:flex;gap:10px;margin-top:8px}
+.bgrp .btn{margin-bottom:0}
+
+/* toast */
+.toast-el{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,255,204,.12);border:1px solid rgba(0,255,204,.35);color:#00ffcc;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;pointer-events:none;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ======== 首页 ======== -->
+<div class="page on" id="pg-home">
+  <div class="home-inner">
+    <div class="home-logo">🏢</div>
+    <div class="home-title glitch">AI寒冬裁员生存模拟器</div>
+    <div class="home-sub neon">15天求生挑战</div>
+    <div class="home-desc">202X年，AI浪潮席卷互联网<br>你能在15天裁员周期中活下来吗？</div>
+    <div class="home-badges">
+      <span>文字冒险</span><span>属性养成</span><span>多结局</span><span>AI表演</span>
+    </div>
+    <div class="home-btns">
+      <button class="btn bp" id="btn-start">🚀 开始模拟</button>
+      <button class="btn bg-" id="btn-continue" style="display:none">💾 继续上次</button>
+    </div>
+    <div class="home-footer">职场互动模拟工具，仅供学习交流<br>如有雷同，纯属巧合</div>
+  </div>
+</div>
+
+<!-- ======== 角色创建 ======== -->
+<div class="page" id="pg-create">
+  <div style="padding:14px 14px 100px">
+    <div class="ph">
+      <span class="pt">⚙️ 角色配置</span>
+      <span class="ps">初始化你的打工人档案</span>
+    </div>
+    <div class="card" style="background:rgba(255,51,102,.06);border-color:rgba(255,51,102,.25)">
+      <div style="font-size:13px;color:var(--dim);line-height:1.8">
+        ⚡ 你只有 <span style="color:#ff3366;font-weight:700;font-size:15px">15点</span> 分配给学历、出身和天赋<br>
+        🔥 每一个选择都有代价，请仔细权衡
+      </div>
+    </div>
+    <div class="ptbar">
+      <span class="ptlbl">剩余点数</span>
+      <span class="ptval neon" id="pts-val">15</span>
+      <span class="ptunit">pt</span>
+    </div>
+    <div class="card" id="birth-sec"></div>
+    <div class="card" id="talent-sec"></div>
+    <div class="card">
+      <div class="stitle"><span class="si">📊</span><span class="sl">初始属性预览</span></div>
+      <div id="attr-preview"></div>
+    </div>
+    <button class="btn bx" id="btn-confirm" style="margin-top:4px">⚠️ 请完成所有选择</button>
+  </div>
+</div>
+
+<!-- ======== 游戏主界面 ======== -->
+<div class="page" id="pg-game">
+  <div class="sbar">
+    <div class="dinfo">
+      <span class="dlbl">第</span>
+      <span class="dnum" id="g-day">1</span>
+      <span class="dlbl">天</span>
+      <span class="dsl">&nbsp;/15</span>
+    </div>
+    <div class="sbadge sm" id="g-slot">
+      <span id="g-slot-em">🌅</span>
+      <span class="sn" id="g-slot-nm">上午</span>
+    </div>
+    <div style="display:flex;gap:6px">
+      <div class="sbtn" id="btn-restart" title="重开">🔄</div>
+      <div class="sbtn" id="btn-save" title="保存">💾</div>
+    </div>
+  </div>
+  <div class="card" style="padding:12px 14px">
+    <div class="agrid" id="attr-grid"></div>
+  </div>
+  <div id="warn-box"></div>
+  <div class="brow" id="badge-row"></div>
+  <div id="action-area">
+    <div class="atip">
+      <span class="atxt">选择一个行动</span>
+      <span class="asub" id="act-sub">🌅 上午时段</span>
+    </div>
+    <div class="ctabs" id="cat-tabs"></div>
+    <div class="alist" id="act-list"></div>
+  </div>
+</div>
+
+<!-- ======== 事件弹层 ======== -->
+<div class="overlay" id="ov-event" style="display:none">
+  <div class="ov-inner">
+    <div class="ov-card fi" id="ev-card"></div>
+  </div>
+</div>
+
+<!-- ======== 结果弹层 ======== -->
+<div class="overlay" id="ov-result" style="display:none">
+  <div class="ov-inner">
+    <div class="ov-card fi" id="res-card"></div>
+  </div>
+</div>
+
+<!-- ======== 结局页 ======== -->
+<div class="page" id="pg-result">
+  <div class="rdeco">▓▓▓ GAME OVER ▓▓▓</div>
+  <div style="text-align:center" id="re-typewrap"></div>
+  <div class="remain">
+    <span class="rebig" id="re-emoji">🏆</span>
+    <span class="retitle" id="re-title"></span>
+  </div>
+  <div class="card">
+    <span class="redes" id="re-desc"></span>
+    <div class="divider"></div>
+    <span class="resub" id="re-sub"></span>
+  </div>
+  <div class="card">
+    <span class="stlbl">📊 最终数据存档</span>
+    <div id="re-stats"></div>
+  </div>
+  <div class="card" id="re-ach" style="display:none">
+    <span class="actl">🏅 本局成就</span>
+    <div id="re-achlist"></div>
+  </div>
+  <div class="card">
+    <div class="mstgrid" id="re-mini"></div>
+  </div>
+  <div class="qbox"><span class="qt" id="re-quote"></span></div>
+  <div class="bgrp">
+    <button class="btn bp" style="flex:2" id="btn-replay">🔄 再来一局</button>
+    <button class="btn bg-" style="flex:1" id="btn-share">📤 分享</button>
+  </div>
+</div>
+
+</div><!-- end wrap -->
+
+<script>
+(function(){
+
+// ================================================================
+// ========================== 游戏数据 ============================
+// ================================================================
+
+// min = 属性条变红的阈值（危险线），死亡线在 checkDeath 里单独设置（更低）
+// 梯度：min变红（危险）→ 文字警告（告急）→ checkDeath死亡
+var ATTRS = [
+  {k:'leaderLike', ic:'👔', lb:'领导满意度', cl:'#0099ff', min:40},  // 死亡线20，危险线40
+  {k:'output',     ic:'📈', lb:'个人产出值', cl:'#00ffcc', min:35},  // 死亡线20，危险线35
+  {k:'physique',   ic:'💪', lb:'体质值',     cl:'#00cc66', min:30},  // 死亡线0，危险线30
+  {k:'mental',     ic:'😊', lb:'心情',       cl:'#9933ff', min:30},  // 死亡线0，危险线30
+  {k:'social',     ic:'🤝', lb:'同事好感',   cl:'#ff9900', min:15},
+  {k:'antiAI',     ic:'🤖', lb:'对抗AI值',   cl:'#ff3366', min:25},  // 死亡线10，危险线25
+  {k:'salary',     ic:'💳', lb:'月薪(千)',   cl:'#ffd700', min:10, money:true}
+];
+var ALBL = {leaderLike:'领导满意度',output:'个人产出',physique:'体质',mental:'心情',social:'同事好感',antiAI:'对抗AI值',salary:'月薪'};
+
+var SLOTS = ['morning','afternoon'];
+var SNAME = {morning:'上午',afternoon:'下午'};
+var SEM   = {morning:'🌅',afternoon:'☀️'};
+var SBCLS = {morning:'sm',afternoon:'sa'};
+
+// ---- 行动数据 ----
+var ACTIONS = {
+  work:{lb:'💼 工作',cl:'#0099ff',items:[
+    {id:'w1',nm:'认真完成需求',em:'📋',
+     desc:'一行一行写代码，一版一版改需求，像个打工牲口一样老实干活。',
+     fx:{output:8,leaderLike:3,physique:-2,mental:-3,salary:1}},
+    {id:'w2',nm:'用AI辅助完成工作',em:'🤖',
+     desc:'让AI出一半力，自己出一半力，效率翻倍，但AI有时候会写出堪称艺术品的Bug。',
+     fx:{output:10,leaderLike:2,antiAI:3,physique:-1,mental:-2,salary:2},
+     risk:{p:.10,d:'10%概率AI写错内容被发现，产出-5'},rfx:{output:-5}},
+    {id:'w3',nm:'加班赶工',em:'🔥',slots:['afternoon'],
+     desc:'肝到很晚，用青春燃烧KPI，用健康换领导的一个赞。',
+     fx:{output:15,leaderLike:5,physique:-8,mental:-10,salary:3},
+     risk:{p:.20,d:'20%触发猝死预警，体质再-5'},rfx:{physique:-5}},
+    {id:'w4',nm:'给领导写周报PPT',em:'📊',
+     desc:'把这周干的事用精美排版包装，配上充满激情的措辞，让领导感觉你值一百万。',
+     fx:{leaderLike:8,output:2,physique:-3,mental:-5,salary:1}},
+    {id:'w5',nm:'甩锅给AI',em:'🤡',
+     desc:'这个功能写错了？是AI的问题。那个数据出错了？AI乱跑的。反正AI不会反驳你。',
+     fx:{output:5,leaderLike:1,antiAI:-5,mental:2,salary:-1},
+     risk:{p:.30,d:'30%被领导发现'},rfx:{leaderLike:-10}}
+  ]},
+  slack:{lb:'🛋️ 摸鱼',cl:'#ff9900',items:[
+    {id:'s1',nm:'带薪拉屎',em:'🚽',
+     desc:'工位生存学第一课：厕所是合理合法的摸鱼圣地，谁也不能说你。',
+     fx:{physique:1,mental:3,leaderLike:-1}},
+    {id:'s2',nm:'刷脉脉看裁员瓜',em:'📱',
+     desc:'看别人的惨状能让你暂时忘记自己也快惨了。',
+     fx:{mental:5,leaderLike:-3,output:-2},
+     risk:{p:.10,d:'10%被领导抓包'},rfx:{leaderLike:-8}},
+    {id:'s3',nm:'和同事吐槽老板',em:'🗣️',
+     desc:'互诉苦水，抱团取暖，顺便八卦一下谁要被裁，稳固下同事情谊。',
+     fx:{mental:8,social:3,leaderLike:-2},
+     risk:{p:.20,d:'20%被打小报告'},rfx:{leaderLike:-8}},
+    {id:'s4',nm:'带薪逛淘宝',em:'🛒',
+     desc:'用购物快感填补工作的空洞，月底账单再说。',
+     fx:{mental:6,leaderLike:-2,physique:1},
+     risk:{p:.15,d:'15%被领导抓包'},rfx:{leaderLike:-8}},
+    {id:'s5',nm:'假装开会摸鱼',em:'🎭',
+     desc:'在脸上挂着若有所思的表情，实际上脑子已经放空了。',
+     fx:{mental:4,leaderLike:-1,output:-1}}
+  ]},
+  grow:{lb:'📚 成长',cl:'#9933ff',items:[
+    {id:'g1',nm:'学AI提示词技巧',em:'🧠',
+     desc:'研究如何让AI帮你更好地干活，这才是真正的降本增效。',
+     fx:{antiAI:10,output:2,mental:-2,physique:-2}},
+    {id:'g2',nm:'偷偷改简历',em:'📄',
+     desc:'悄悄更新简历，为自己留条后路。不是逃跑，是未雨绸缪。',
+     fx:{},sp:'resume'},
+    {id:'g3',nm:'考公刷题',em:'📖',
+     desc:'悄悄备考，如果卷进体制内，以后不用担心被AI优化。',
+     fx:{mental:2,antiAI:-3},sp:'exam'},
+    {id:'g4',nm:'学新的职场技能',em:'💡',
+     desc:'提升自己的硬技能，让自己成为那个稍微难以替代一点的人。',
+     fx:{antiAI:5,mental:-3,physique:-2}}
+  ]},
+  ai:{lb:'🎪 AI表演',cl:'#ff3366',items:[
+    {id:'a1',nm:'AI成果包装术',em:'✨',ai:true,
+     desc:'把平平无奇的工作成果，搭配AI废稿和截图，包装成突破性创新。',
+     fx:{leaderLike:7,output:3,antiAI:-4,social:2},
+     risk:{p:.25,d:'25%被同事拆穿，好感暴跌'},rfx:{leaderLike:-18,social:-15,antiAI:-5}},
+    {id:'a2',nm:'表演式AI直播办公',em:'📡',ai:true,
+     desc:'开共享屏幕放AI录屏，实际摸鱼，到点交提前写好的成果。',
+     fx:{leaderLike:5,mental:6,antiAI:-5,output:-3},
+     risk:{p:.25,d:'25%被领导突击检查，裁员预警+antiAI暴跌'},rfx:{leaderLike:-25,antiAI:-10}},
+    {id:'a3',nm:'AI邀功甩锅二象性',em:'⚡',ai:true,
+     desc:'亮点是AI帮我完成的，Bug是AI生成的逻辑漏洞，我只是个无辜的指挥家。',
+     fx:{leaderLike:5,output:3,antiAI:-6,mental:4},
+     risk:{p:.35,d:'35%被发现前后矛盾，输出和好感双降'},rfx:{leaderLike:-22,output:-12,antiAI:-8}},
+    {id:'a4',nm:'部门AI提效分享表演',em:'🎬',ai:true,slots:['afternoon'],
+     desc:'剪接AI10倍效率的录屏，在部门做分享，让全公司都以为你是AI第一人。',
+     fx:{leaderLike:10,social:4,antiAI:-8,output:-4},
+     risk:{p:.20,d:'20%被技术同事扒出造假，全公司社死'},rfx:{leaderLike:-30,antiAI:-12,social:-15}},
+    {id:'a5',nm:'AI周报美化术',em:'📈',ai:true,
+     desc:'在周报里加上"AI提效300%"、"AI赋能增长"，让普通周报直接封神。',
+     fx:{leaderLike:7,output:3,antiAI:-5},
+     risk:{p:.15,d:'15%被总部数据核查发现造假，信任归零'},rfx:{leaderLike:-25,antiAI:-8,output:-10}}
+  ]},
+  rest:{lb:'😴 休息',cl:'#00cc66',items:[
+    {id:'r1',nm:'带薪午睡',em:'💤',slots:['afternoon'],
+     desc:'闭上眼，世界清净了，领导发的消息也看不见了。',
+     fx:{physique:5,mental:2,leaderLike:-2}},
+    {id:'r2',nm:'健身',em:'🏋️',slots:['afternoon'],
+     desc:'把工作的愤怒转化为举铁的力量，强健体魄。',
+     fx:{physique:10,mental:5,social:2}},
+    {id:'r3',nm:'和同事聚餐喝酒',em:'🍻',slots:['afternoon'],
+     desc:'一起喝酒，一起吐槽，感情深了，背刺的概率也低了。',
+     fx:{mental:10,social:8,physique:-3}},
+    {id:'r4',nm:'早睡',em:'🛌',slots:['afternoon'],
+     desc:'8点上床，手机勿扰，人间清醒，养精蓄锐，明天继续苟。',
+     fx:{physique:12,mental:5}},
+    {id:'r5',nm:'刷剧打游戏',em:'🎮',slots:['afternoon'],
+     desc:'精神满格，身体亏空，但快乐是真的，明天再说明天的事。',
+     fx:{mental:8,physique:-6}}
+  ]}
+};
+
+// ---- 固定剧情事件（共8个） ----
+var FIXED = [
+  {id:'fe1',day:1,slot:'morning',title:'📧 降本增效通知',fixed:true,
+   desc:'刚到公司，HR全员群发邮件：公司启动「降本增效+AI升级」计划，15天后优化30%员工。工位上还放了一台AI办公机器人，用一双空洞的电子眼盯着你。',
+   opts:[
+     {tx:'立刻给领导发消息表忠心',em:'🙏',fx:{leaderLike:5,mental:-3}},
+     {tx:'打开AI研究怎么用',em:'🤖',fx:{antiAI:5,output:2}},
+     {tx:'截图发脉脉吃瓜',em:'🍿',fx:{mental:5,leaderLike:-2}}
+   ]},
+  {id:'fe2',day:4,slot:'afternoon',title:'📢 第四天周会',fixed:true,
+   desc:'领导开周会，当众表扬了用AI产出翻倍的同事，又点名批评产出下降的人，说「跟不上AI的人，公司不需要」。全场鸦雀无声，你的后背冒汗。',
+   opts:[
+     {tx:'会后立刻找领导表决心',em:'💪',fx:{leaderLike:3,mental:-5}},
+     {tx:'找被表扬的同事请教AI技巧',em:'🤝',fx:{antiAI:8,social:2}},
+     {tx:'会后和同事吐槽老板PUA',em:'🙄',fx:{mental:8,social:3,leaderLike:-3}}
+   ]},
+  {id:'fe3',day:6,slot:'morning',title:'🤖 AI员工评级系统上线',fixed:true,
+   desc:'公司宣布启动「AI员工评级系统」，员工去留70%由AI打分决定。明日需提交第一周AI使用报告。',
+   opts:[
+     {tx:'通宵做真实的AI使用报告',em:'📝',fx:{antiAI:8,leaderLike:3,physique:-6,mental:-5}},
+     {tx:'做表演式AI报告，P满AI截图和假数据',em:'🎭',ai:true,fx:{leaderLike:10,antiAI:-8,mental:3},risk:{p:.20,d:'20%被系统查出造假，好感和AI值双暴跌'},rfx:{leaderLike:-22,antiAI:-12}},
+     {tx:'摆烂交空白报告',em:'😑',fx:{leaderLike:-15,mental:5,antiAI:-10}}
+   ]},
+  {id:'fe4',day:9,slot:'afternoon',title:'👻 目睹同事被优化',fixed:true,
+   desc:'凌晨1点，你还在加班。突然发现隔壁工位的同事在收拾东西，HR站在旁边，他被优化了。临走前，他拍了拍你的肩膀：「下一个可能就是你」。',
+   opts:[
+     {tx:'继续加班赶产出',em:'⚡',fx:{output:10,physique:-5,mental:-10}},
+     {tx:'立刻收拾东西下班',em:'🏃',fx:{physique:3,mental:2,leaderLike:-5}},
+     {tx:'偷偷问HR裁员名单',em:'🕵️',fx:{social:-5},risk:{p:.90,d:'90%被领导知道，好感-10'},rfx:{leaderLike:-10}}
+   ]},
+  {id:'fe5',day:12,slot:'afternoon',title:'🧪 AI抗压能力测试',fixed:true,
+   desc:'HR通知全员：公司将用AI模拟裁员场景给每个员工做「抗压能力测试」，测试不合格的直接进入优化名单。你的心跳开始加速。',
+   opts:[
+     {tx:'认真配合AI测试',em:'✅',fx:{mental:-8,leaderLike:5}},
+     {tx:'对着AI表演「我用AI帮公司赚大钱」',em:'🎪',ai:true,fx:{leaderLike:8,antiAI:-6,mental:2},risk:{p:.30,d:'30%AI直接识破你的表演，测试结果更差'},rfx:{leaderLike:-15,antiAI:-8}},
+     {tx:'直接骂AI一顿退出测试',em:'🤬',fx:{mental:10,leaderLike:-20,social:15}}
+   ]},
+  {id:'fe6',day:13,slot:'morning',title:'⚠️ 领导最后通牒',fixed:true,
+   desc:'领导单独找你谈话：「你的位置AI也能做，给你最后一周时间证明自己的不可替代性。」办公室里的空气凝固了，你能听到自己的心跳。',
+   opts:[
+     {tx:'疯狂加班卷产出',em:'💥',fx:{output:15,leaderLike:5,physique:-10,mental:-15}},
+     {tx:'给领导展示你对AI的掌控力',em:'🤖',fx:{antiAI:15,leaderLike:8,output:5}},
+     {tx:'当场提离职',em:'🚪',sp:'resign',fx:{}}
+   ]},
+  {id:'fe7',day:14,slot:'afternoon',title:'📋 裁员名单泄露',fixed:true,
+   desc:'你在脉脉上看到匿名发的名单，你的名字在待定区。更刺激的是——你领导的名字也在里面。这可能是个翻盘的机会，也可能是个陷阱。',
+   opts:[
+     {tx:'连夜加班给领导表忠心',em:'🌙',fx:{output:15,leaderLike:8,physique:-10,mental:-12}},
+     {tx:'找领导谈「我帮你保KPI，你保我不被裁」',em:'🤝',fx:{leaderLike:20},sp:'alliance',risk:{p:.20,d:'20%被领导反手卖了'},rfx:{leaderLike:-30}},
+     {tx:'截图保存，准备劳动仲裁',em:'⚖️',fx:{social:10,mental:5},sp:'union'}
+   ]},
+  {id:'fe8',day:15,slot:'afternoon',title:'🏆 最终审判日',fixed:true,final:true,
+   desc:'HR群发了最终裁员名单。15天的生存之战，今天见分晓。',
+   opts:[]}
+];
+
+// ---- 随机事件（通用10个 + 出身专属6个，共16个）----
+var RANDEVS = [
+  // ===== 通用随机事件 =====
+  {id:'re1',title:'🏆 领导@全员晒AI成果',
+   desc:'领导在大群@全员，让大家晒出AI提效成果，并配了一句话：「谁用得好，谁就是公司的未来；谁用不好，那就交给AI来顶替你。」\n\n——此刻全公司鸦雀无声，然后纷纷开始截图。',
+   opts:[
+     {tx:'包装出一份「AI让我效率提升1000%」的PPT',em:'🎭',ai:true,fx:{leaderLike:12,social:2,antiAI:-8},sp:'immBuff',risk:{p:.28,d:'28%被领导当场要求复现，直接社死'},rfx:{leaderLike:-28,antiAI:-10}},
+     {tx:'老老实实晒真实的AI使用记录',em:'📊',fx:{leaderLike:8,antiAI:10,social:3}},
+     {tx:'潜水，装成刚下班没看到',em:'🙈',fx:{leaderLike:-6,mental:3}}
+   ]},
+  {id:'re2',title:'😤 你的方案被AI秒了',
+   desc:'你花了三天写的方案，同事用AI10分钟生成了一份，领导在群里点名夸同事，最后加了一句「其他人可以多学学」。\n\n那个「其他人」，正对着你的屏幕。',
+   opts:[
+     {tx:'连夜重写，加入AI做不到的细节和洞察',em:'⚡',fx:{output:12,leaderLike:6,physique:-6,mental:-10,antiAI:4}},
+     {tx:'把AI方案稍微改改，改成自己的风格提交',em:'😏',fx:{output:5,leaderLike:2,antiAI:-8,mental:4}},
+     {tx:'在群里直接回：AI不懂业务，这方案落地会出问题',em:'😤',fx:{leaderLike:-10,output:-4,mental:6,social:6}}
+   ]},
+  {id:'re3',title:'🐛 线上锅精准砸中你',
+   desc:'线上出了严重bug，领导在大群艾特你：「这块你在负责，什么情况？」\n\n你翻了翻代码——那根本不是你写的，是上个月离职的人留下的。但他已经走了，锅只能由活着的人背。',
+   opts:[
+     {tx:'当场截图甩出证据，当众洗清',em:'📌',fx:{leaderLike:-8,social:-8,mental:12,output:-4}},
+     {tx:'默默背锅，私下找领导解释，争取印象分',em:'😔',fx:{leaderLike:-2,mental:-14,social:6}},
+     {tx:'「这块AI生成的代码，我已在排查」——反将一军',em:'🤖',fx:{leaderLike:-4,antiAI:-5,mental:6},risk:{p:.45,d:'45%被领导直接让你演示AI生成过程'},rfx:{leaderLike:-20}}
+   ]},
+  {id:'re4',title:'🌙 凌晨2点被@改PPT',
+   desc:'凌晨两点，领导发了一条消息：「麻烦把这份PPT改一下，明天早上九点要用。」\n\n你躺在床上，盯着手机屏幕，看了很久。',
+   opts:[
+     {tx:'立刻爬起来改，反正睡不着',em:'😭',fx:{leaderLike:9,output:3,physique:-7,mental:-12}},
+     {tx:'装睡，早上七点起来改，争取赶上',em:'🙈',fx:{leaderLike:-4,mental:4,output:1}},
+     {tx:'回复：「我现在不方便，但可以给你一个AI工具链接」',em:'✊',fx:{leaderLike:-12,mental:16,social:10}}
+   ]},
+  {id:'re5',title:'💔 HR的「谈心」邀请',
+   desc:'HR约你去小会议室「聊聊」，语气很温和，说公司为了「可持续发展」，需要对部分岗位薪资进行结构性调整，降幅20%，并附上一句：「现在市场你也知道的，能有份工作就不错了。」\n\n这句话，你感觉在哪本剧本里见过。',
+   opts:[
+     {tx:'接受降薪，先保住位置',em:'😞',fx:{mental:-22,salary:-6}},
+     {tx:'当场表示要走，拿N+1赔偿',em:'✌️',sp:'resign',fx:{mental:16}},
+     {tx:'搬出AI来谈判：我帮公司一个人顶三个，这薪资可以商量',em:'🤖',ai:true,fx:{leaderLike:8,mental:4,salary:2,antiAI:-5}}
+   ]},
+  {id:'re6',title:'☕ 最后一杯免费咖啡',
+   desc:'今天茶水间的咖啡机、饮料柜、零食架全部清空了，换上了一个桶装水加饮水机。行政发了一封邮件：「为了降本增效，公司将取消茶水福利，AI不需要咖啡，我们的目标是更高效的人机协作模式。」\n\n有人把这封邮件截图，发上了职场匿名社区。',
+   opts:[
+     {tx:'默默接受，自己带保温杯上班',em:'☕',fx:{mental:-4,leaderLike:2}},
+     {tx:'在工作群里@行政：能不能保留热水器',em:'😡',fx:{mental:6,leaderLike:-9,social:8}},
+     {tx:'偷偷买了一包咖啡分给同事，收买人心',em:'🥰',fx:{social:8,mental:5,leaderLike:3}}
+   ]},
+  {id:'re7',title:'📚 下班后AI强制培训',
+   desc:'公司请了一个AI转型讲师，强制要求所有人下班后免费参加两小时培训。培训通知最后一行是：「本次培训纳入工作态度考核，缺席记录将送至直属领导。」\n\n签到表上已经有人写了假名。',
+   opts:[
+     {tx:'全程认真参加，认真做笔记',em:'📝',fx:{antiAI:12,leaderLike:5,physique:-5,mental:-9}},
+     {tx:'签到之后去厕所，然后消失',em:'🏃',fx:{antiAI:2,leaderLike:-4,mental:6}},
+     {tx:'直接不去，让领导看看谁有种',em:'😤',fx:{leaderLike:-12,mental:12,social:5}}
+   ]},
+  {id:'re8',title:'😅 AI顾问被AI取代了',
+   desc:'培训刚进行到一半，HR走进来宣布：「经过评估，这位顾问的服务内容AI工具完全可以替代，且成本仅为其咨询费的2%，感谢他的付出，合作就此结束。」\n\n顾问愣了三秒，收拾包，走了。\n\n台下鸦雀无声，所有人都在看自己的工牌。',
+   opts:[
+     {tx:'鼓掌，表示支持公司决策',em:'👏',fx:{leaderLike:6,mental:-12,social:-6}},
+     {tx:'悄悄加了顾问微信，问他后来去哪了',em:'🤫',fx:{social:4,antiAI:6,mental:3}},
+     {tx:'低着头玩手机，装作什么也没看见',em:'📱',fx:{mental:2,antiAI:4}}
+   ]},
+  {id:'re9',title:'👥 同学群又双叕有人被裁了',
+   desc:'大学同学群里，今天又有两个人发来「在吗，公司有坑位吗」。你数了数，群里200人，至少有60个人被裁了，剩下的一半在焦虑，还有一批在卖保险。\n\n有人@你，说「你那家公司好像挺稳的？」',
+   opts:[
+     {tx:'假装信号不好，潜水',em:'🙊',fx:{mental:-6,social:-3}},
+     {tx:'如实说「不稳，随时可能轮到我」',em:'😰',fx:{mental:5,social:5}},
+     {tx:'给几个靠谱的同学内推，互相留条后路',em:'🤝',fx:{social:12,mental:4},sp:'resume'}
+   ]},
+  {id:'re10',title:'🔔 公司又一次全员会',
+   desc:'下午突然通知：三点全员大会，不得请假。\n\n会议室里，你注意到前排坐着一个陌生人，穿着很正式，手里拿着厚厚的一沓材料，旁边跟着HR总监。\n\n有人悄悄截图发到外面：「有情况，大家注意。」',
+   opts:[
+     {tx:'会议上主动发言展示AI应用成果，刷存在感',em:'💪',fx:{leaderLike:10,antiAI:6,mental:-8}},
+     {tx:'安静坐着，认真听，看清局势再说',em:'🎯',fx:{mental:-4,social:3,leaderLike:3}},
+     {tx:'会议结束立刻打开招聘软件',em:'📱',fx:{mental:-6},sp:'resume'}
+   ]},
+
+  // ===== 出身专属随机事件（根据玩家初始选择触发） =====
+
+  // 学历：顶尖院校/985才触发
+  {id:'re_edu_top',title:'🎓 学历查水表',
+   desc:'领导在会上点你名字，说「你是名校出来的，这个AI项目应该不是问题吧」，全场二十几双眼睛盯着你。\n\n你的名校光环，第一次成了你最大的负担。',
+   eduReq:['edu_top','edu_985'],
+   opts:[
+     {tx:'接下来，用真本事交出漂亮的结果',em:'💥',fx:{output:16,leaderLike:10,antiAI:8,physique:-8,mental:-12}},
+     {tx:'用AI快速生成方案，包装成自己的',em:'🎭',ai:true,fx:{leaderLike:10,antiAI:-10,output:-4},risk:{p:.25,d:'25%被追问细节当场穿帮'},rfx:{leaderLike:-30,antiAI:-15}},
+     {tx:'坦诚说这个领域还需要学习时间',em:'😅',fx:{leaderLike:-5,mental:8,antiAI:5}}
+   ]},
+
+  // 学历：双非/大专才触发
+  {id:'re_edu_low',title:'📋 学历被当众提起',
+   desc:'午饭聊天，有个同事不小心说漏嘴，提到「你不是XXX出来的吗，当时怎么进来的」。大家哄笑，你笑了笑没说话。\n\n但你记住了，在这个地方，学历是把刀，不知道什么时候会捅一下。',
+   eduReq:['edu_gen','edu_voc'],
+   opts:[
+     {tx:'回去疯狂学AI技能，用产出代替学历',em:'⚡',fx:{antiAI:10,output:8,mental:-8,physique:-5}},
+     {tx:'找那个同事喝酒，聊聊，化解尴尬',em:'🍺',fx:{social:10,mental:3,leaderLike:2}},
+     {tx:'截图，发到职场社区，标题：《职场学历歧视实录》',em:'📸',fx:{mental:8,social:6,leaderLike:-8}}
+   ]},
+
+  // 职场经历：大厂跳槽才触发
+  {id:'re_car_big',title:'🏢 大厂光环失效了',
+   desc:'你提了一句「我在以前公司是这么做的」，领导打断你：「那是以前，这里不一样。」\n\n你意识到，大厂的金字招牌，在这里已经开始褪色了。',
+   careerReq:['car_big'],
+   opts:[
+     {tx:'彻底融入现在的公司，放下过去',em:'🔄',fx:{leaderLike:8,output:10,mental:-10,social:5}},
+     {tx:'私下找领导证明大厂经验的价值',em:'🤝',fx:{leaderLike:10,antiAI:5,mental:-5}},
+     {tx:'打开招聘软件，找下一家同级别的坑',em:'📱',fx:{mental:5},sp:'resume'}
+   ]},
+
+  // 职场经历：外包转正才触发
+  {id:'re_car_out',title:'🔧 「你外包出来的吧」',
+   desc:'开会时，一个新来的同事当着领导的面问你：「你是外包转过来的吧，那你的绩效考核标准是一样的吗？」\n\n会议室里安静了一秒，你感觉到几道目光扫过来。',
+   careerReq:['car_out'],
+   opts:[
+     {tx:'平静地说「是的，而且我比任何人都熟悉这块业务」',em:'🗿',fx:{leaderLike:8,social:6,mental:10,output:5}},
+     {tx:'沉默，等散会之后找他私聊',em:'😶',fx:{mental:-6,social:3}},
+     {tx:'「对，所以我比你们任何人都拿到过更低的工资」',em:'🔥',fx:{social:12,mental:8,leaderLike:-8}}
+   ]},
+
+  // 家庭：家里有矿才触发
+  {id:'re_fam_rich',title:'💰 「你反正不缺钱」',
+   desc:'私下吐槽降薪时，有个同事突然说「你不一样，你家里有钱，降薪对你来说没什么」。\n\n你不知道是该解释，还是就这么算了。',
+   familyReq:['fam_rich'],
+   opts:[
+     {tx:'解释清楚：我的钱跟公司怎么对我无关',em:'😤',fx:{social:5,mental:5,leaderLike:-3}},
+     {tx:'附和他，顺势和大家建立共同话题',em:'😌',fx:{social:10,leaderLike:3}},
+     {tx:'一言不发，默默走开',em:'🚶',fx:{mental:-5,social:-3}}
+   ]},
+
+  // 家庭：房贷+老人孩子才触发
+  {id:'re_fam_debt',title:'💸 今晚有三条账单',
+   desc:'下班回家路上，手机连续收到三条消息：房贷扣款2800元，孩子补习班缴费通知，老人医院的账单图片。\n\n你在地铁上站着，把手机放进口袋，闭上眼睛默默站了三站。',
+   familyReq:['fam_debt'],
+   opts:[
+     {tx:'回公司加班，多做一点就多一点',em:'🌙',fx:{output:14,leaderLike:6,physique:-10,mental:-16}},
+     {tx:'打开副业接单平台，看看有没有单可接',em:'📱',fx:{salary:4,mental:-8,physique:-5}},
+     {tx:'在家陪家人，今晚先不想工作的事',em:'🤗',fx:{mental:8,physique:5,output:-4}}
+   ]}
+];
+
+// ---- 结局数据 ----
+var ENDINGS = {
+  fired:{type:'fail',title:'💼 裁员出局',emoji:'😭',
+    desc:'终究还是来了。HR叫你去小会议室，桌上放着一个信封。15天的挣扎，在这一刻归零。你收拾着工位上的私人物品，同事们低着头，没人敢看你的眼睛……',
+    sub:'被AI替代的打工人，找到了第一块多米诺骨牌的感觉。',
+    quote:'世界上最公平的事，就是AI也不知道自己什么时候会被更强的AI替代。'},
+  overwork:{type:'fail',title:'💀 过劳猝死',emoji:'💀',
+    desc:'凌晨三点，你倒在了工位上。救护车来了，同事们说「他昨天还在加班」。公司发了一封悼念邮件，然后在下午就开始招聘你的替代者。',
+    sub:'没有被AI替代，但被工作替代了生命。',
+    quote:'奋斗是值得称赞的，但你值得比这更好的人生。'},
+  breakdown:{type:'fail',title:'🧠 精神崩溃',emoji:'🌀',
+    desc:'那天你突然在工位上开始大笑，然后开始大哭，最后平静地收拾了东西走出公司大楼。医生说需要休息。公司说需要人顶你的活。',
+    sub:'精神先离职了，身体后来才跟上。',
+    quote:'从心理上离职，可能是比从物理上离职更需要勇气的事。'},
+  poorpay:{type:'fail',title:'💸 薪资清零',emoji:'😱',
+    desc:'你的月薪已经降到5000以下，连房租都付不起了。无奈之下，你只能主动离职，另寻出路。',
+    sub:'不是被裁的，是因为太穷待不下去的。',
+    quote:'工资太低，是比裁员更残酷的逐客令。'},
+  resign:{type:'fail',title:'🚪 主动出走',emoji:'🏃',
+    desc:'你提交了离职申请。也许是主动，也许是被逼的，总之你先迈出了那一步。外面的世界，未必比里面更好，但至少是你自己选的。',
+    sub:'不算失败，只是换了一个战场。',
+    quote:'离开不一定是失败，也可能是更好的开始。'},
+  survived:{type:'normal',title:'🏳️ 苟活幸存者',emoji:'😮',
+    desc:'你成功活过了这次裁员潮。看着身边同事一个个被AI替代，你不知道下一次裁员会不会轮到你，只能继续在工位上苟着，做AI暂时还没学会的杂活。',
+    sub:'苟着，也是一种胜利。至少这个月的房贷还得上。',
+    quote:'活下去本身，就已经是一种胜利。'},
+  aimanager:{type:'normal',title:'🤖 AI监工',emoji:'🎛️',
+    desc:'你成功把自己变成了AI的管理者。公司把你留下专门负责调教AI，你从打工人变成了AI保姆——每天喂数据、改bug，活成了AI的附属品。',
+    sub:'职位升级了，但你不确定自己是驯服了AI，还是被AI驯服了。',
+    quote:'驯服AI的人，才是不会被AI替代的人——即使你有时候感觉更像是被AI管理。'},
+  aiwinner:{type:'perfect',title:'🏆 反杀AI赢家',emoji:'👑',
+    desc:'你用AI做出了远超公司预期的项目，不仅没被裁，还升职成了部门负责人，把原来只会画饼的领导优化掉了。你真正掌握了AI的主动权，成了这次寒冬里唯一的赢家。',
+    sub:'寒冬终将过去，但你已经是站在峰顶的那个人。',
+    quote:'寒冬的终点，是那些真正学会与AI共存的人的春天。'},
+  govjob:{type:'perfect',title:'🏛️ 上岸成功',emoji:'🎓',
+    desc:'你在裁员潮里偷偷备考，成功考上了公务员。告别了996和AI焦虑，进入体制内，朝九晚五，稳稳当当，再也不用担惊受怕被优化。',
+    sub:'铁饭碗这个词，在AI时代重新有了意义。',
+    quote:'体制内不一定没有AI，但至少裁员流程要走得更久一些。'},
+  union:{type:'hidden',title:'⚖️ 集体反杀',emoji:'✊',
+    desc:'你和同事们联合起来，举报了公司的违法裁员行为。劳动仲裁大获全胜：公司取消裁员计划，赔偿了被裁同事，你们还争取到了不加班的福利。',
+    sub:'互联网寒冬里，这道光是你们一起点燃的。',
+    quote:'打工人最终的武器，永远是团结。'},
+  jobhop:{type:'hidden',title:'🎯 跳槽赢家',emoji:'🌟',
+    desc:'你在裁员潮里成功拿到了更好的offer，薪资涨了30%，还不用担惊受怕被优化，成功从这个烂坑里跳了出去，成了同事们羡慕的对象。',
+    sub:'这家公司的烂，成了你身价的证明。',
+    quote:'你不是被裁的，你是主动选择了更好的机会。'}
+};
+
+// ---- 角色创建数据（无难度选择，总点数固定15，需要艰难抉择）----
+var EDU = [
+  {id:'edu_top',  nm:'顶尖院校硕士',em:'🎓',cost:7,desc:'名校光环加持，但高薪高期待，压力山大',eff:'领导好感+5 对抗AI+8 产出+3',attrs:{leaderLike:5,antiAI:8,output:3},sal:45},
+  {id:'edu_985',  nm:'985本科',     em:'📘',cost:5,desc:'还算拿得出手的学历，但AI时代不够看了',eff:'领导好感+3 对抗AI+4 产出+2',attrs:{leaderLike:3,antiAI:4,output:2},sal:35},
+  {id:'edu_211',  nm:'211本科',     em:'📗',cost:3,desc:'中规中矩，既不亮眼也不拖后腿',eff:'产出+2 同事好感+2',attrs:{output:2,social:2},sal:28},
+  {id:'edu_gen',  nm:'双非本科',    em:'📜',cost:1,desc:'普通院校出身，接地气，但面对裁员要多拼几分',eff:'产出+1 同事好感+3',attrs:{social:3,output:1},sal:22},
+  {id:'edu_voc',  nm:'大专/中专',   em:'📋',cost:0,desc:'学历最低，但身段灵活，干活实在',eff:'体质+5 同事好感+2（免费）',attrs:{physique:5,social:2},sal:18}
+];
+var CAREER = [
+  {id:'car_big',   nm:'头部大厂跳槽', em:'🏢',cost:5,desc:'履历最亮眼，但领导期待也最高，稍有失误就是重点观察对象',eff:'领导好感+6 产出+3 对抗AI+3',attrs:{leaderLike:6,output:3,antiAI:3},salmod:15},
+  {id:'car_mid',   nm:'中型公司跳槽', em:'🏬',cost:3,desc:'有经验有资历，不算核心但也不是第一批被裁的那种',eff:'产出+3 同事好感+3',attrs:{output:3,social:3},salmod:5},
+  {id:'car_fresh', nm:'应届校招',     em:'🌱',cost:2,desc:'新人有容错空间，但薪资低、AI最先盯着你',eff:'心情+8 同事好感+5',attrs:{mental:8,social:5},salmod:-8},
+  {id:'car_out',   nm:'外包转正',     em:'🔧',cost:0,desc:'外包出身被歧视，但你已经习惯了，体质最强，免疫打击',eff:'体质+8 产出+3（免费）',attrs:{physique:8,output:3},salmod:-10}
+];
+var FAMILY = [
+  {id:'fam_rich',  nm:'家里有矿',    em:'💰',cost:6,desc:'随时可以不干，底气十足，领导都要给你三分面子',eff:'心情+25 领导好感+5',attrs:{mental:25,leaderLike:5},salmod:-5},
+  {id:'fam_free',  nm:'本地有房无贷',em:'🏠',cost:4,desc:'没有后顾之忧，比上不足但比下有余',eff:'心情+15',attrs:{mental:15},salmod:0},
+  {id:'fam_rent',  nm:'租房独居',    em:'🏘️',cost:1,desc:'每月租金压着，不敢轻易离职，但至少只有自己',eff:'产出+2（压力变动力）',attrs:{output:2},salmod:3},
+  {id:'fam_debt',  nm:'房贷+老人孩子',em:'💸',cost:0,desc:'上有老下有小还有房贷，你一天都不敢出问题，但也更能拼',eff:'产出+5 月薪+3K（免费，因为你输不起）',attrs:{output:5},salmod:5}
+];
+var TALENTS = {
+  work:{lb:'💼 工作系',max:2,items:[
+    {id:'t_roll',  nm:'卷王本体', em:'⚡',cost:4,eff:'加班体质消耗-50%，产出+30%'},
+    {id:'t_slack', nm:'摸鱼大师', em:'🎣',cost:4,eff:'摸鱼领导好感扣-80%'},
+    {id:'t_iron',  nm:'铁人体质', em:'🛡️',cost:3,eff:'负面心情效果-50%'},
+    {id:'t_horse', nm:'劳模属性', em:'🐴',cost:3,eff:'工作产出+15%'}
+  ]},
+  social:{lb:'🤝 社交系',max:2,items:[
+    {id:'t_social', nm:'人脉王者', em:'🤝',cost:3,eff:'同事好感效果+100%'},
+    {id:'t_manage', nm:'向上管理', em:'👑',cost:4,eff:'AI表演成功后额外+领导好感'},
+    {id:'t_sales',  nm:'社交NB症', em:'🎤',cost:3,eff:'所有正面效果+20%'}
+  ]},
+  ai:{lb:'🤖 AI系',max:2,items:[
+    {id:'t_ai',     nm:'AI驯服者',  em:'🤖',cost:5,eff:'对抗AI值行动效果+50%'},
+    {id:'t_aistar', nm:'AI表演大师',em:'🎭',cost:4,eff:'AI表演翻车概率-80%，收益+30%'},
+    {id:'t_fake',   nm:'数据鬼才',  em:'📊',cost:3,eff:'造假数据必成功'},
+    {id:'t_tech',   nm:'AI克星',    em:'💻',cost:4,eff:'技术类工作产出+25%'}
+  ]},
+  life:{lb:'📖 生存系',max:2,items:[
+    {id:'t_exam',    nm:'公考钉子户',em:'📖',cost:2,eff:'考公刷题效果+100%'},
+    {id:'t_resume',  nm:'简历战神',  em:'📄',cost:3,eff:'改简历额外+面试机会'},
+    {id:'t_savings', nm:'省钱达人',  em:'🪙',cost:2,eff:'薪资衰减-30%'},
+    {id:'t_lucky',   nm:'职场锦鲤',  em:'🍀',cost:5,eff:'所有风险触发率-50%'}
+  ]}
+};
+var ALL_TALENTS = [];
+Object.values(TALENTS).forEach(function(c){ c.items.forEach(function(t){ ALL_TALENTS.push(t); }); });
+
+// ================================================================
+// ========================== 游戏状态 ============================
+// ================================================================
+
+var gs = null; // game state
+var pc = null; // player config (create screen)
+var curCat = 'work';
+
+function clamp(v){ return Math.max(0, Math.min(100, v)); }
+function hasTalent(id){ return gs && gs.p && (gs.p.talents||[]).indexOf(id)>-1; }
+
+function save(){
+  try{ localStorage.setItem('aiws2_save', JSON.stringify({gs:gs,pc:pc})); }catch(e){}
+}
+function loadSave(){
+  try{
+    var d = JSON.parse(localStorage.getItem('aiws2_save')||'null');
+    if(d){ gs=d.gs; pc=d.pc; return true; }
+  }catch(e){}
+  return false;
+}
+function hasSave(){ return !!localStorage.getItem('aiws2_save'); }
+function clearSave(){ localStorage.removeItem('aiws2_save'); }
+
+// ================================================================
+// ========================== 页面路由 ============================
+// ================================================================
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(function(p){
+    p.classList.remove('on');
+    p.style.display = 'none';
+  });
+  var el = document.getElementById(id);
+  el.classList.add('on');
+  el.style.display = (id === 'pg-home') ? 'flex' : 'block';
+  window.scrollTo(0,0);
+}
+
+function toast(msg){
+  var el = document.createElement('div');
+  el.className = 'toast-el';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function(){ el.remove(); }, 1600);
+}
+
+// ================================================================
+// ========================== 首页 ================================
+// ================================================================
+
+function initHome(){
+  var bc = document.getElementById('btn-continue');
+  bc.style.display = hasSave() ? 'block' : 'none';
+}
+
+// ================================================================
+// ========================== 角色创建 ============================
+// ================================================================
+
+function initCreate(){
+  pc = {total:15,remain:15,edu:'',career:'',family:'',talents:[]};
+  renderBirth();
+  renderTalents();
+  syncPts();       // 修复：重开时立刻刷新点数显示，避免残留上一局的值
+  updatePreview();
+  checkCanStart();
+}
+
+function renderBirth(){
+  function group(title, opts, sel, type){
+    return '<div class="tg">'
+      +'<span class="gn">'+title+'</span>'
+      +'<div class="tlist">'
+      +opts.map(function(o){
+        var cls = 'oi';
+        if(sel===o.id) cls += ' sel';
+        else if(pc.remain < o.cost) cls += ' dis';
+        return '<div class="'+cls+'" data-type="'+type+'" data-id="'+o.id+'" data-cost="'+o.cost+'">'
+          +'<div class="oh"><span class="on">'+o.em+' '+o.nm+'</span>'
+          +'<span class="oc'+(o.cost===0?' free':'')+'">'+( o.cost>0 ? '-'+o.cost+'pt' : '免费')+'</span></div>'
+          +'<span class="od">'+o.desc+'</span>'
+          +'<span class="oe">'+o.eff+'</span>'
+          +'</div>';
+      }).join('')
+      +'</div></div>';
+  }
+  var html = '<div class="stitle"><span class="si">🏷️</span><span class="sl">出身标签（每类必选1个）</span></div>'
+    + group('📚 学历背景', EDU,    pc.edu,    'edu')
+    + group('💼 职场出身', CAREER, pc.career, 'career')
+    + group('🏠 家庭背景', FAMILY, pc.family, 'family');
+  document.getElementById('birth-sec').innerHTML = html;
+  document.querySelectorAll('#birth-sec .oi').forEach(function(el){
+    el.addEventListener('click', function(){
+      if(this.classList.contains('dis')) return;
+      var type = this.getAttribute('data-type');
+      var id   = this.getAttribute('data-id');
+      var cost = parseInt(this.getAttribute('data-cost'));
+      var opts = type==='edu' ? EDU : type==='career' ? CAREER : FAMILY;
+      var prev = pc[type];
+      var prevCost = prev ? (opts.find(function(o){return o.id===prev;})||{cost:0}).cost : 0;
+      var diff = cost - prevCost;
+      if(pc.remain - diff < 0){ toast('点数不足！'); return; }
+      pc[type] = id; pc.remain -= diff;
+      renderBirth(); renderTalents(); syncPts(); updatePreview(); checkCanStart();
+    });
+  });
+}
+
+function renderTalents(){
+  var html = '<div class="stitle"><span class="si">⚡</span><span class="sl">天赋标签（每类可选1-2个）</span></div>';
+  Object.keys(TALENTS).forEach(function(catId){
+    var cat = TALENTS[catId];
+    var selInCat = pc.talents.filter(function(t){ return cat.items.some(function(i){return i.id===t;}); });
+    html += '<div class="tg" style="margin-bottom:14px">'
+      +'<span class="gn">'+cat.lb+' · 已选'+selInCat.length+'/'+cat.max+'</span>'
+      +'<div class="tgrid">'
+      +cat.items.map(function(t){
+        var sel = pc.talents.indexOf(t.id)>-1;
+        var dis = !sel && pc.remain < t.cost;
+        return '<div class="ti'+(sel?' sel':'')+(dis?' dis':'')+'" data-catid="'+catId+'" data-id="'+t.id+'" data-cost="'+t.cost+'">'
+          +'<span class="te">'+t.em+'</span>'
+          +'<span class="tn">'+t.nm+'</span>'
+          +'<span class="tco">-'+t.cost+'pt</span>'
+          +'<span class="tef">'+t.eff+'</span>'
+          +'</div>';
+      }).join('')
+      +'</div></div>';
+  });
+  document.getElementById('talent-sec').innerHTML = html;
+  document.querySelectorAll('#talent-sec .ti').forEach(function(el){
+    el.addEventListener('click', function(){
+      if(this.classList.contains('dis')) return;
+      var catId = this.getAttribute('data-catid');
+      var id    = this.getAttribute('data-id');
+      var cost  = parseInt(this.getAttribute('data-cost'));
+      var cat   = TALENTS[catId];
+      var selInCat = pc.talents.filter(function(t){ return cat.items.some(function(i){return i.id===t;}); });
+      var idx = pc.talents.indexOf(id);
+      if(idx > -1){
+        pc.talents.splice(idx,1); pc.remain += cost;
+      } else {
+        if(selInCat.length >= cat.max){ toast('该分类最多选'+cat.max+'个！'); return; }
+        if(pc.remain < cost){ toast('点数不足！'); return; }
+        pc.talents.push(id); pc.remain -= cost;
+      }
+      renderTalents(); syncPts(); updatePreview(); checkCanStart();
+    });
+  });
+}
+
+function syncPts(){
+  var el = document.getElementById('pts-val');
+  el.textContent = pc.remain;
+  el.style.color = pc.remain<=2 ? '#ff3366' : '#00ffcc';
+  el.style.textShadow = pc.remain<=2 ? '0 0 8px #ff3366' : '0 0 8px #00ffcc';
+}
+
+function calcSpent(){
+  var s = 0;
+  if(pc.edu)    s += (EDU.find(function(o){return o.id===pc.edu;})||{cost:0}).cost;
+  if(pc.career) s += (CAREER.find(function(o){return o.id===pc.career;})||{cost:0}).cost;
+  if(pc.family) s += (FAMILY.find(function(o){return o.id===pc.family;})||{cost:0}).cost;
+  pc.talents.forEach(function(tid){ s += (ALL_TALENTS.find(function(t){return t.id===tid;})||{cost:0}).cost; });
+  return s;
+}
+
+function calcInitAttrs(){
+  // 基础值全面压低，让玩家一开始就很紧张
+  var base = {leaderLike:30,output:30,physique:45,mental:40,social:30,antiAI:15,salary:20};
+  var eduO   = EDU.find(function(o){return o.id===pc.edu;});
+  var carO   = CAREER.find(function(o){return o.id===pc.career;});
+  var famO   = FAMILY.find(function(o){return o.id===pc.family;});
+  if(eduO){ base.salary = eduO.sal || 25; }
+  if(carO){ base.salary += carO.salmod||0; }
+  if(famO){ base.salary += famO.salmod||0; }
+  function apply(o){ if(!o||!o.attrs) return; Object.keys(o.attrs).forEach(function(k){ if(base[k]!==undefined) base[k]=clamp(base[k]+o.attrs[k]); }); }
+  apply(eduO); apply(carO); apply(famO);
+  base.salary = Math.max(12, Math.min(80, base.salary));
+  return base;
+}
+
+function updatePreview(){
+  var attrs = calcInitAttrs();
+  document.getElementById('attr-preview').innerHTML = ATTRS.map(function(c){
+    var v = attrs[c.k]||0;
+    return '<div class="ar">'
+      +'<span class="al">'+c.ic+' '+c.lb+'</span>'
+      +'<div class="pbar"><div class="pfill" style="width:'+Math.min(v,100)+'%;background:'+c.cl+'"></div></div>'
+      +'<span class="av" style="color:'+c.cl+'">'+(c.money ? v+'K' : v)+'</span>'
+      +'</div>';
+  }).join('');
+}
+
+function checkCanStart(){
+  var ok = !!(pc.edu && pc.career && pc.family);
+  var btn = document.getElementById('btn-confirm');
+  btn.className = 'btn ' + (ok ? 'bp' : 'bx');
+  btn.textContent = ok ? '🚀 开始15天模拟' : '⚠️ 请完成所有选择';
+}
+
+function confirmCreate(){
+  if(!pc.edu || !pc.career || !pc.family) return;
+  var attrs = calcInitAttrs();
+  initGame(attrs);
+  showPage('pg-game');
+  syncUI();
+}
+
+// ================================================================
+// ========================== 游戏引擎 ============================
+// ================================================================
+
+function initGame(attrs){
+  gs = {
+    day:1, slot:0,
+    p: Object.assign({}, attrs, {
+      talents: pc.talents.slice(),
+      resumeCnt:0, examCnt:0, aiSucc:0, aiFail:0,
+      labels:[], buffs:{}, unionDone:false, jobhopDone:false,
+      edu: pc.edu, career: pc.career, family: pc.family
+    }),
+    log:[], over:false, endingId:null,
+    evHistory:[], pendFixed:null, pendRand:null
+  };
+  gs.pendFixed = checkFixed();
+  save();
+}
+
+function mod(attr, delta, mult){
+  mult = mult||1;
+  var p = gs.p;
+  var v = p[attr]||0;
+  var adj = delta < 0 ? Math.round(delta*mult) : delta;
+  p[attr] = clamp(v + adj);
+  return p[attr] - v;
+}
+
+function applyFx(fx, mult){
+  mult = mult||1;
+  var changes = [];
+  Object.keys(fx).forEach(function(k){
+    var v = fx[k];
+    if(typeof v !== 'number' || v===0) return;
+    if(!ALBL[k]) return;
+    var actual = mod(k, v, mult);
+    if(actual !== 0) changes.push({k:k, d:actual});
+  });
+  return changes;
+}
+
+function dailyDecay(){
+  var p = gs.p;
+  // 每日基础衰减（比之前略收窄，但保持一定压力）
+  var decay = {leaderLike:-4, output:-5, salary:-1};
+  // 低状态时有额外惩罚，但有上限，不会一回合暴死
+  if(p.physique < 25) decay.mental  = (decay.mental||0)  - 3;  // 体质差→心情下降
+  if(p.mental < 25)   decay.output  = (decay.output||0)  - 3;  // 心情差→产出下降
+  if(p.leaderLike < 30 && !p.buffs.alliance)
+                      decay.leaderLike = (decay.leaderLike||0) - 2; // 好感低→雪球但温和
+  // 每次衰减单个值不超过-10，避免单回合暴死
+  Object.keys(decay).forEach(function(k){
+    if(decay[k] < -10) decay[k] = -10;
+  });
+  applyFx(decay, 1);
+  // Buff 倒计时
+  Object.keys(p.buffs).forEach(function(k){
+    if(typeof p.buffs[k]==='number' && p.buffs[k]>0){
+      p.buffs[k]--;
+      if(p.buffs[k]<=0) delete p.buffs[k];
+    }
+  });
+}
+
+function checkDeath(){
+  var p = gs.p;
+  if(p.physique <= 0)  return 'overwork';
+  if(p.mental <= 0)    return 'breakdown';
+  if(p.leaderLike < 20 && !p.buffs.alliance) return 'fired';
+  if(p.output < 20)    return 'fired';
+  if(p.antiAI < 10 && gs.day >= 8 && !p.buffs.alliance) return 'fired'; // 第8天后AI值太低被裁
+  if(p.salary <= 5)    return 'poorpay';
+  return null;
+}
+
+function getWarnings(){
+  var p = gs.p, w = [];
+  // 领导满意度（死亡线20）：3级预警
+  if(p.leaderLike < 22 && !p.buffs.alliance)
+    w.push('🚨 【即将被裁！】领导满意度触底，下一步可能被叫去小会议室');
+  else if(p.leaderLike < 32 && !p.buffs.alliance)
+    w.push('⚠️ 领导满意度告急，再跌就要被裁了');
+  else if(p.leaderLike < 40)
+    w.push('📉 领导满意度偏低，注意维护关系');
+  // 个人产出（死亡线20）：2级预警
+  if(p.output < 22)
+    w.push('🚨 【即将被裁！】产出极低，已被列为裁员重点对象');
+  else if(p.output < 30)
+    w.push('⚠️ 产出值告急，继续下降将触发裁员');
+  // 对抗AI值（第6天后死亡线10）：2级预警
+  if(gs.day >= 5){
+    if(p.antiAI < 12 && !p.buffs.alliance)
+      w.push('🚨 【即将被裁！】对抗AI值极低，AI已经可以完全替代你');
+    else if(p.antiAI < 20)
+      w.push('⚠️ 对抗AI值危险，你正在变成最容易被替代的人');
+  }
+  // 体质（死亡线0）：2级预警
+  if(p.physique < 10)
+    w.push('🚨 【濒死预警】体质极度低下，下次加班可能直接倒下');
+  else if(p.physique < 22)
+    w.push('💀 体质危险，过劳猝死风险极高');
+  // 心情（死亡线0）：2级预警
+  if(p.mental < 10)
+    w.push('🚨 【崩溃预警】心情极度低落，精神已在崩溃边缘');
+  else if(p.mental < 20)
+    w.push('😰 心理健康告急，再扛下去要垮');
+  // 薪资（死亡线5）
+  if(p.salary <= 6)
+    w.push('💸 【薪资告急】月薪已逼近生存底线');
+  return w;
+}
+
+function aiRisk(base){
+  var r = base;
+  if(hasTalent('t_aistar')) r *= 0.2;
+  if(hasTalent('t_fake'))   r = 0;
+  if(gs.p.labels.indexOf('AI骗子')>-1) r *= 2;
+  if(hasTalent('t_lucky'))  r *= 0.5;
+  return Math.min(r, 1);
+}
+
+function getBaseRisk(base){
+  var r = base;
+  if(hasTalent('t_lucky')) r *= 0.5;
+  return Math.min(r, 1);
+}
+
+function checkFixed(){
+  var slot = SLOTS[gs.slot];
+  for(var i=0;i<FIXED.length;i++){
+    var e = FIXED[i];
+    if(e.day===gs.day && e.slot===slot && gs.evHistory.indexOf(e.id)<0) return e;
+  }
+  return null;
+}
+
+function drawRandom(){
+  var p = gs.p;
+  var avail = RANDEVS.filter(function(e){
+    if(gs.evHistory.indexOf(e.id) > -1) return false;
+    // 出身专属事件：检查 edu/career/family 约束
+    if(e.eduReq    && e.eduReq.indexOf(p.edu)     < 0) return false;
+    if(e.careerReq && e.careerReq.indexOf(p.career)< 0) return false;
+    if(e.familyReq && e.familyReq.indexOf(p.family)< 0) return false;
+    return true;
+  });
+  if(!avail.length) return null;
+  // 出身专属事件的权重稍高（2倍），让初始选择影响更明显
+  var pool = [];
+  avail.forEach(function(e){
+    var w = (e.eduReq||e.careerReq||e.familyReq) ? 2 : 1;
+    for(var i=0;i<w;i++) pool.push(e);
+  });
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function triggerEnding(id){
+  gs.over = true; gs.endingId = id; save();
+}
+
+function finalSettle(){
+  if(gs.over) return;
+  var p = gs.p;
+  if(p.unionDone && p.social >= 90) return triggerEnding('union');
+  if(p.jobhopDone) return triggerEnding('jobhop');
+  if(p.antiAI < 20 && !p.buffs.alliance && !p.buffs.immune) return triggerEnding('fired');
+  if(p.examCnt >= 10) return triggerEnding('govjob');
+  if(p.antiAI >= 90 && p.output >= 80 && p.leaderLike >= 70) return triggerEnding('aiwinner');
+  if(p.aiSucc >= 5 && p.aiFail === 0) return triggerEnding('aiwinner');
+  if(p.antiAI >= 50 && p.leaderLike >= 80) return triggerEnding('aimanager');
+  triggerEnding('survived');
+}
+
+function handleSpecial(sp, logs){
+  var p = gs.p;
+  if(sp==='resume'){
+    p.resumeCnt++;
+    if(p.resumeCnt>=5){ p.jobhopDone=true; logs.push('📄 简历更新5次！跳槽机会来了！'); }
+  } else if(sp==='exam'){
+    p.examCnt += hasTalent('t_exam') ? 2 : 1;
+    if(p.examCnt>=10) logs.push('📚 刷题达到10次！公考上岸有望！');
+  } else if(sp==='resign'){
+    triggerEnding('resign');
+  } else if(sp==='alliance'){
+    p.buffs.alliance = true; logs.push('🤝 与领导建立同盟！低满意度也不会被裁！');
+  } else if(sp==='union'){
+    p.unionDone = true; logs.push('⚖️ 集体反杀路线已解锁！');
+  } else if(sp==='immBuff'){
+    p.buffs.immune = 3; logs.push('🛡️ 获得3天免裁Buff！');
+  } else if(sp==='startup'){
+    p.resumeCnt++; logs.push('🤝 与被裁同学建立联系');
+  }
+}
+
+function checkAIMilestone(){
+  var p = gs.p;
+  if(p.aiSucc >= 3 && p.labels.indexOf('AI红人')<0){
+    p.labels.push('AI红人'); toast('🏷️ 解锁「AI红人」标签！AI表演收益+20%');
+  }
+  if(p.aiSucc >= 5 && p.aiFail === 0){
+    p.buffs.immune = true;
+    mod('leaderLike',30); mod('social',20); mod('antiAI',20);
+    triggerEnding('aiwinner');
+  }
+  if(p.aiFail >= 2 && p.labels.indexOf('AI骗子')<0){
+    p.labels.push('AI骗子'); toast('🏷️ 你获得了「AI骗子」标签，AI表演风险翻倍！');
+  }
+}
+
+function execAction(actionId){
+  var action = null;
+  var catKeys = Object.keys(ACTIONS);
+  for(var i=0;i<catKeys.length;i++){
+    var found = ACTIONS[catKeys[i]].items.filter(function(a){return a.id===actionId;});
+    if(found.length){ action=found[0]; break; }
+  }
+  if(!action) return null;
+  var p = gs.p;
+  var result = {action:action, changes:[], riskHit:false, riskDesc:'', logs:[]};
+  var fx = Object.assign({}, action.fx);
+  // 天赋加成
+  if(action.ai && hasTalent('t_aistar')){
+    Object.keys(fx).forEach(function(k){ if(fx[k]>0) fx[k]=Math.round(fx[k]*1.3); });
+  }
+  if(hasTalent('t_ai') && fx.antiAI > 0) fx.antiAI = Math.round(fx.antiAI*1.5);
+  if(hasTalent('t_iron') && fx.mental < 0) fx.mental = Math.round(fx.mental*0.5);
+  if(hasTalent('t_roll') && fx.physique < 0 && action.id==='w3') fx.physique = Math.round(fx.physique*0.5);
+  if(hasTalent('t_horse') && action.id.charAt(0)==='w' && fx.output>0) fx.output = Math.round(fx.output*1.15);
+  if(hasTalent('t_social') && fx.social > 0) fx.social = Math.round(fx.social*2);
+  if(hasTalent('t_sales')){
+    Object.keys(fx).forEach(function(k){ if(fx[k]>0) fx[k]=Math.round(fx[k]*1.2); });
+  }
+  result.changes = applyFx(fx);
+  if(action.sp) handleSpecial(action.sp, result.logs);
+  if(action.risk && !gs.over){
+    var rp = action.ai ? aiRisk(action.risk.p) : getBaseRisk(action.risk.p);
+    if(Math.random() < rp){
+      result.riskHit = true; result.riskDesc = action.risk.d;
+      if(action.rfx) applyFx(action.rfx);
+    }
+  }
+  if(action.ai){
+    if(!result.riskHit) p.aiSucc++;
+    else p.aiFail++;
+    checkAIMilestone();
+    if(!result.riskHit && hasTalent('t_manage')){
+      mod('leaderLike',5); p.buffs.immune = (p.buffs.immune||0)+1;
+    }
+  }
+  var dead = checkDeath();
+  if(dead && !gs.over) triggerEnding(dead);
+  return result;
+}
+
+function resolveEvOpt(event, idx){
+  var opt = event.opts[idx]; if(!opt) return null;
+  var p = gs.p;
+  var result = {opt:opt, changes:[], riskHit:false, riskDesc:'', logs:[]};
+  if(opt.fx && Object.keys(opt.fx).length>0) result.changes = applyFx(opt.fx);
+  if(opt.sp) handleSpecial(opt.sp, result.logs);
+  if(opt.risk && !gs.over){
+    var rp = opt.ai ? aiRisk(opt.risk.p) : getBaseRisk(opt.risk.p);
+    if(Math.random() < rp){
+      result.riskHit = true; result.riskDesc = opt.risk.d;
+      if(opt.rfx) applyFx(opt.rfx);
+    }
+  }
+  if(opt.ai){
+    if(!result.riskHit) p.aiSucc++;
+    else p.aiFail++;
+    checkAIMilestone();
+  }
+  gs.evHistory.push(event.id);
+  gs.pendFixed = null; gs.pendRand = null;
+  var dead = checkDeath();
+  if(dead && !gs.over) triggerEnding(dead);
+  return result;
+}
+
+function advanceSlot(){
+  gs.slot++;
+  if(gs.slot >= 2){
+    gs.slot = 0;
+    if(gs.day >= 15){ finalSettle(); return; }
+    dailyDecay();
+    gs.day++;
+    var dead = checkDeath();
+    if(dead && !gs.over){ triggerEnding(dead); return; }
+  }
+  gs.pendFixed = checkFixed();
+  if(!gs.pendFixed && Math.random() < 0.35){
+    gs.pendRand = drawRandom();
+  } else {
+    gs.pendRand = null;
+  }
+}
+
+function getAvailActions(){
+  var slot = SLOTS[gs.slot];
+  return Object.keys(ACTIONS).map(function(catId){
+    var cat = ACTIONS[catId];
+    var items = cat.items.filter(function(a){
+      return !a.slots || a.slots.indexOf(slot)>-1;
+    });
+    return {catId:catId, lb:cat.lb, cl:cat.cl, items:items};
+  }).filter(function(c){ return c.items.length>0; });
+}
+
+// ================================================================
+// ========================== UI渲染 ==============================
+// ================================================================
+
+function syncUI(){
+  if(!gs) return;
+  var p = gs.p;
+  document.getElementById('g-day').textContent = gs.day;
+  var slot = SLOTS[gs.slot];
+  var sb = document.getElementById('g-slot');
+  sb.className = 'sbadge ' + SBCLS[slot];
+  document.getElementById('g-slot-em').textContent = SEM[slot];
+  document.getElementById('g-slot-nm').textContent = SNAME[slot];
+  renderAttrGrid();
+  // 警告
+  var warns = getWarnings();
+  document.getElementById('warn-box').innerHTML = warns.map(function(w){
+    return '<div class="wi pulse">'+w+'</div>';
+  }).join('');
+  // 徽章
+  var badges = '';
+  (p.labels||[]).forEach(function(lb){ badges += '<span class="tag '+(lb==='AI红人'?'tc':'tr')+'">'+lb+'</span>'; });
+  if(p.buffs.immune > 0) badges += '<span class="tag ty">🛡️ 免裁'+p.buffs.immune+'天</span>';
+  if(p.buffs.alliance)   badges += '<span class="tag tc">🤝 领导同盟</span>';
+  document.getElementById('badge-row').innerHTML = badges;
+  // 游戏结束
+  if(gs.over){
+    document.getElementById('action-area').style.display='none';
+    document.getElementById('ov-event').style.display='none';
+    document.getElementById('ov-result').style.display='none';
+    setTimeout(function(){ goResult(); }, 800);
+    return;
+  }
+  // 事件
+  if(gs.pendFixed){ showEvent(gs.pendFixed); return; }
+  if(gs.pendRand){  showEvent(gs.pendRand);  return; }
+  document.getElementById('ov-event').style.display='none';
+  document.getElementById('action-area').style.display='block';
+  buildActionUI();
+}
+
+function renderAttrGrid(){
+  var p = gs.p;
+  document.getElementById('attr-grid').innerHTML = ATTRS.map(function(c){
+    var v = p[c.k]||0;
+    var warn = v < c.min;
+    return '<div class="arow'+(warn?' warn':'')+'">'
+      +'<span class="aicon">'+c.ic+'</span>'
+      +'<span class="aname">'+c.lb+'</span>'
+      +'<div class="pbar"><div class="pfill" style="width:'+Math.min(v,100)+'%;background:'+c.cl+'"></div></div>'
+      +'<span class="anum" style="color:'+c.cl+'">'+(c.money ? v+'K' : v)+'</span>'
+      +'</div>';
+  }).join('');
+}
+
+function showEvent(event){
+  document.getElementById('action-area').style.display='none';
+  document.getElementById('ov-result').style.display='none';
+  var optsHtml = '';
+  if(!event.final){
+    optsHtml = '<div class="evopts">'
+      +(event.opts||[]).map(function(o,i){
+        // 选前不显示fx数值，只显示文字和风险提示
+        var rk = o.risk ? '<span class="evork">⚡ '+o.risk.d+'</span>' : '';
+        return '<div class="evopt" data-idx="'+i+'">'
+          +'<span class="evoem">'+(o.em||'▶')+'</span>'
+          +'<div class="evoc">'
+          +'<span class="evotxt">'+o.tx+'</span>'
+          +rk
+          +'</div></div>';
+      }).join('')
+      +'</div>';
+  } else {
+    optsHtml = '<button class="btn bp" style="margin-top:14px" id="btn-final">查看最终结局 →</button>';
+  }
+  document.getElementById('ev-card').innerHTML =
+    '<div class="evhd">'
+    +'<span class="evt">'+event.title+'</span>'
+    +'<span class="evtag '+(event.fixed?'evf':'evr')+'">'+(event.fixed?'📌 剧情':'🎲 随机')+'</span>'
+    +'</div>'
+    +'<div class="divider"></div>'
+    +'<span class="evdesc">'+event.desc+'</span>'
+    +optsHtml;
+  document.getElementById('ov-event').style.display='flex';
+  // 绑定选项
+  document.querySelectorAll('#ev-card .evopt').forEach(function(el){
+    el.addEventListener('click', function(){
+      var idx = parseInt(this.getAttribute('data-idx'));
+      onEvOpt(idx);
+    });
+  });
+  // 绑定最终结局按钮
+  var bf = document.getElementById('btn-final');
+  if(bf) bf.addEventListener('click', function(){ doFinalSettle(); });
+}
+
+function onEvOpt(idx){
+  var event = gs.pendFixed || gs.pendRand; if(!event) return;
+  var result = resolveEvOpt(event, idx); if(!result) return;
+  save();
+  showResultCard(
+    '事件结果',
+    (result.opt.em||'')+ ' '+ result.opt.tx,
+    '',
+    result.changes, result.riskHit, result.riskDesc, result.logs,
+    false
+  );
+  renderAttrGrid();
+}
+
+function doFinalSettle(){
+  finalSettle(); save();
+  document.getElementById('ov-event').style.display='none';
+  goResult();
+}
+
+function showResultCard(title, action, desc, changes, riskHit, riskDesc, logs, isAction){
+  var effsHtml = changes.map(function(c){
+    return '<div class="efc '+(c.d>0?'pos':'neg')+'">'
+      +'<span class="efcl">'+(ALBL[c.k]||c.k)+'</span>'
+      +'<span class="efcv">'+(c.d>0?'+':'')+c.d+'</span>'
+      +'</div>';
+  }).join('');
+  var riskHtml = riskHit ? '<div class="riskalert">⚡ 风险触发：'+riskDesc+'</div>' : '';
+  var logsHtml = logs.length ? '<div class="logbox">'+logs.map(function(l){ return '<span class="logitem">'+l+'</span>'; }).join('')+'</div>' : '';
+  var descHtml = desc ? '<span class="resdesc">'+desc+'</span>' : '';
+  document.getElementById('res-card').innerHTML =
+    '<span class="restit">'+title+'</span>'
+    +'<span class="resact">'+action+'</span>'
+    +'<div class="divider"></div>'
+    +descHtml
+    +'<div class="effslist">'+(effsHtml||'<span style="color:var(--dim);font-size:13px">无属性变动</span>')+'</div>'
+    +riskHtml+logsHtml
+    +'<button class="btn bp" id="btn-res-cont" style="margin-top:4px">继续 →</button>';
+  document.getElementById('ov-event').style.display='none';
+  document.getElementById('ov-result').style.display='flex';
+  document.getElementById('btn-res-cont').addEventListener('click', function(){
+    document.getElementById('ov-result').style.display='none';
+    if(gs.over){ goResult(); return; }
+    advanceSlot(); save(); syncUI();
+  });
+}
+
+function buildActionUI(){
+  var cats = getAvailActions();
+  if(!cats.find(function(c){return c.catId===curCat;})) curCat = cats[0]&&cats[0].catId||'work';
+  var slot = SLOTS[gs.slot];
+  document.getElementById('act-sub').textContent = SEM[slot]+' '+SNAME[slot]+'时段';
+  document.getElementById('cat-tabs').innerHTML = cats.map(function(c){
+    var on = c.catId===curCat;
+    return '<div class="ctab'+(on?' on':'')+'" style="'+(on?'border-color:'+c.cl+';color:'+c.cl+';font-weight:700':'')+'" data-cat="'+c.catId+'">'+c.lb+'</div>';
+  }).join('');
+  document.querySelectorAll('#cat-tabs .ctab').forEach(function(el){
+    el.addEventListener('click', function(){
+      curCat = this.getAttribute('data-cat');
+      buildActionUI();
+    });
+  });
+  var cat = cats.find(function(c){return c.catId===curCat;}); if(!cat) return;
+  document.getElementById('act-list').innerHTML = cat.items.map(function(a){
+    // 不显示fx数值，只显示风险概率描述
+    var rk = a.risk ? '<div class="risk">⚡ '+a.risk.d+'</div>' : '';
+    var aib = a.ai ? '<span class="aibadge">AI表演</span>' : '';
+    return '<div class="ait card" data-aid="'+a.id+'">'
+      +'<div class="aih"><span class="aie">'+a.em+'</span><span class="ain">'+a.nm+'</span>'+aib+'</div>'
+      +'<span class="aid">'+a.desc+'</span>'
+      +rk
+      +'</div>';
+  }).join('');
+  document.querySelectorAll('#act-list .ait').forEach(function(el){
+    el.addEventListener('click', function(){
+      var aid = this.getAttribute('data-aid');
+      doAction(aid);
+    });
+  });
+}
+
+function doAction(actionId){
+  var result = execAction(actionId); if(!result) return;
+  save();
+  var a = result.action;
+  showResultCard(
+    SEM[SLOTS[gs.slot]]+' '+SNAME[SLOTS[gs.slot]]+'行动',
+    a.em+' '+a.nm,
+    a.desc,
+    result.changes, result.riskHit, result.riskDesc, result.logs,
+    true
+  );
+  renderAttrGrid();
+}
+
+// ================================================================
+// ========================== 结局页 ==============================
+// ================================================================
+
+function goResult(){
+  renderResult(gs.endingId||'survived');
+  showPage('pg-result');
+}
+
+function renderResult(eid){
+  var e = ENDINGS[eid] || ENDINGS.survived;
+  var p = gs.p;
+  var typeCls = {fail:'ef',normal:'en2',perfect:'ep2',hidden:'eh'}[e.type]||'en2';
+  var typeLbl = {fail:'💀 生存失败',normal:'😮 普通通关',perfect:'🏆 完美通关',hidden:'🌟 隐藏结局'}[e.type]||'';
+  document.getElementById('re-typewrap').innerHTML = '<span class="retag '+typeCls+'">'+typeLbl+'</span>';
+  document.getElementById('re-emoji').textContent = e.emoji;
+  document.getElementById('re-title').textContent = e.title;
+  document.getElementById('re-desc').textContent = e.desc;
+  document.getElementById('re-sub').textContent = e.sub;
+  document.getElementById('re-quote').textContent = '「'+e.quote+'」';
+  document.getElementById('re-stats').innerHTML = ATTRS.map(function(c){
+    var v = p[c.k]||0;
+    return '<div class="strow">'
+      +'<span class="stic">'+c.ic+'</span>'
+      +'<span class="stn">'+c.lb+'</span>'
+      +'<div class="pbar"><div class="pfill" style="width:'+Math.min(v,100)+'%;background:'+c.cl+'"></div></div>'
+      +'<span class="stv" style="color:'+c.cl+'">'+(c.money?v+'K':v)+'</span>'
+      +'</div>';
+  }).join('');
+  // 成就
+  var achs = calcAchs(p, eid);
+  if(achs.length){
+    document.getElementById('re-ach').style.display='block';
+    document.getElementById('re-achlist').innerHTML = achs.map(function(a){
+      return '<div class="acit"><span class="ace">'+a.em+'</span><div><span class="acn">'+a.nm+'</span><span class="acd">'+a.dc+'</span></div></div>';
+    }).join('');
+  } else {
+    document.getElementById('re-ach').style.display='none';
+  }
+  // 小统计
+  document.getElementById('re-mini').innerHTML = [
+    {lb:'AI表演成功',vl:(p.aiSucc||0)+'次'},
+    {lb:'AI表演翻车',vl:(p.aiFail||0)+'次'},
+    {lb:'改简历次数',vl:(p.resumeCnt||0)+'次'},
+    {lb:'考公刷题',  vl:(p.examCnt||0)+'次'},
+    {lb:'游戏难度',  vl:{easy:'简单',normal:'普通',hard:'地狱'}[p.diff]||'普通'},
+    {lb:'天赋标签',  vl:(p.talents||[]).map(function(id){ return (ALL_TALENTS.find(function(t){return t.id===id;})||{nm:'?'}).nm; }).join('/')||'无'}
+  ].map(function(s){
+    return '<div class="mst"><span class="mstl">'+s.lb+'</span><span class="mstv">'+s.vl+'</span></div>';
+  }).join('');
+}
+
+function calcAchs(p, eid){
+  var a = [];
+  if((p.aiSucc||0)>=3 && (p.aiFail||0)===0) a.push({em:'🎭',nm:'AI表演封神',dc:'连续3次AI表演零翻车'});
+  if((p.aiFail||0)>=3) a.push({em:'💩',nm:'翻车专家',dc:'AI表演翻车3次以上'});
+  if((p.resumeCnt||0)>=5) a.push({em:'📄',nm:'简历更新狂魔',dc:'改了5次以上的简历'});
+  if((p.examCnt||0)>=5) a.push({em:'📖',nm:'考公战士',dc:'刷题超过5次'});
+  if((p.antiAI||0)>=80) a.push({em:'🤖',nm:'AI克星',dc:'对抗AI值超过80'});
+  if((p.social||0)>=80) a.push({em:'🤝',nm:'人缘王者',dc:'同事好感度超过80'});
+  if(eid==='aiwinner') a.push({em:'👑',nm:'最强打工人',dc:'达成完美通关结局'});
+  if(eid==='union')    a.push({em:'✊',nm:'团结就是力量',dc:'触发集体反杀隐藏结局'});
+  return a;
+}
+
+// ================================================================
+// ========================== 初始化 ==============================
+// ================================================================
+
+document.addEventListener('DOMContentLoaded', function(){
+  // 初始化：隐藏所有页面，显示首页
+  document.querySelectorAll('.page').forEach(function(p){ p.style.display='none'; });
+  var home = document.getElementById('pg-home');
+  home.style.display = 'flex';
+  home.classList.add('on');
+
+  initHome();
+
+  document.getElementById('btn-start').addEventListener('click', function(){
+    clearSave(); showPage('pg-create'); initCreate();
+  });
+  document.getElementById('btn-continue').addEventListener('click', function(){
+    if(loadSave()){ showPage('pg-game'); syncUI(); } else { clearSave(); showPage('pg-create'); initCreate(); }
+  });
+  document.getElementById('btn-confirm').addEventListener('click', function(){
+    confirmCreate();
+  });
+  document.getElementById('btn-restart').addEventListener('click', function(){
+    if(confirm('确定要重开吗？当前进度将丢失！')){ clearSave(); showPage('pg-home'); initHome(); }
+  });
+  document.getElementById('btn-save').addEventListener('click', function(){
+    save(); toast('已保存 💾');
+  });
+  document.getElementById('btn-replay').addEventListener('click', function(){
+    clearSave(); showPage('pg-home'); initHome();
+  });
+  document.getElementById('btn-share').addEventListener('click', function(){
+    var p = gs&&gs.p; var eid = gs&&gs.endingId||'survived'; var e = ENDINGS[eid]||ENDINGS.survived;
+    var txt = '我在《AI寒冬裁员生存模拟器》中达成了「'+e.title+'」结局！\n对抗AI值：'+(p&&p.antiAI||0)+' | 领导满意度：'+(p&&p.leaderLike||0)+'\n快来试试你能否在15天生存挑战中活下来！';
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(txt).then(function(){ toast('结局文案已复制 📋'); }).catch(function(){ toast('分享：'+txt.slice(0,30)+'...'); });
+    } else { toast('分享：'+txt.slice(0,30)+'...'); }
+  });
+});
+
+})();
+</script>
+</body>
+</html>
