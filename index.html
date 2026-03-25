@@ -577,6 +577,7 @@ var RANDEVS = [
      {tx:'直接不去，让领导看看谁有种',em:'😤',fx:{leaderLike:-12,mental:12,social:5}}
    ]},
   {id:'re8',title:'😅 AI顾问被AI取代了',
+   req:['re7'],  // 必须先触发「下班后AI强制培训」才会出现
    desc:'培训刚进行到一半，HR走进来宣布：「经过评估，这位顾问的服务内容AI工具完全可以替代，且成本仅为其咨询费的2%，感谢他的付出，合作就此结束。」\n\n顾问愣了三秒，收拾包，走了。\n\n台下鸦雀无声，所有人都在看自己的工牌。',
    opts:[
      {tx:'鼓掌，表示支持公司决策',em:'👏',fx:{leaderLike:6,mental:-12,social:-6}},
@@ -989,7 +990,8 @@ function initGame(attrs){
       edu: pc.edu, career: pc.career, family: pc.family
     }),
     log:[], over:false, endingId:null,
-    evHistory:[], pendFixed:null, pendRand:null
+    evHistory:[], pendFixed:null, pendRand:null,
+    randEvDay: -1  // 记录上次随机事件触发的天数，同一天只触发一次
   };
   gs.pendFixed = checkFixed();
   save();
@@ -1132,6 +1134,8 @@ function drawRandom(){
   var p = gs.p;
   var avail = RANDEVS.filter(function(e){
     if(gs.evHistory.indexOf(e.id) > -1) return false;
+    // 前置事件依赖：req数组里的事件必须全部已触发
+    if(e.req && e.req.some(function(rid){ return gs.evHistory.indexOf(rid) < 0; })) return false;
     // 出身专属事件：检查 edu/career/family 约束
     if(e.eduReq    && e.eduReq.indexOf(p.edu)     < 0) return false;
     if(e.careerReq && e.careerReq.indexOf(p.career)< 0) return false;
@@ -1292,8 +1296,10 @@ function advanceSlot(){
     }
   }
   gs.pendFixed = checkFixed();
-  if(!gs.pendFixed && Math.random() < 0.35){
+  // 随机事件：每天最多触发1次（randEvDay记录上次触发天），35%概率，且不与固定事件同时出现
+  if(!gs.pendFixed && gs.randEvDay !== gs.day && Math.random() < 0.35){
     gs.pendRand = drawRandom();
+    if(gs.pendRand) gs.randEvDay = gs.day; // 记录本天已触发
   } else {
     gs.pendRand = null;
   }
