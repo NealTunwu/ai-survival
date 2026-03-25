@@ -356,8 +356,8 @@ html,body{background:var(--bg);color:var(--txt);font-family:'PingFang SC','Helve
 // min = 属性条变红的阈值（危险线），死亡线在 checkDeath 里单独设置（更低）
 // 梯度：min变红（危险）→ 文字警告（告急）→ checkDeath死亡
 var ATTRS = [
-  {k:'leaderLike', ic:'👔', lb:'领导满意度', cl:'#0099ff', min:28},  // 死亡线20，危险线28（初始值30，留缓冲）
-  {k:'output',     ic:'📈', lb:'个人产出值', cl:'#00ffcc', min:25},  // 死亡线20，危险线25（初始值30，留缓冲）
+  {k:'leaderLike', ic:'👔', lb:'领导满意度', cl:'#0099ff', min:28},  // 死亡线20，初始40，变红28（约4天缓冲）
+  {k:'output',     ic:'📈', lb:'个人产出值', cl:'#00ffcc', min:28},  // 死亡线20，初始40，变红28（约3天缓冲）
   {k:'physique',   ic:'💪', lb:'体质值',     cl:'#00cc66', min:30},  // 死亡线0，危险线30
   {k:'mental',     ic:'😊', lb:'心情',       cl:'#9933ff', min:30},  // 死亡线0，危险线30
   {k:'social',     ic:'🤝', lb:'同事好感',   cl:'#ff9900', min:15},
@@ -933,8 +933,9 @@ function calcSpent(){
 }
 
 function calcInitAttrs(){
-  // 基础值全面压低，让玩家一开始就很紧张
-  var base = {leaderLike:30,output:30,physique:45,mental:40,social:30,antiAI:15,salary:20};
+  // 基础值：leaderLike/output提高到40，给玩家约5天的自然衰减缓冲再触发预警
+  // 这样玩家有足够时间了解游戏机制，而不是一开局就快死
+  var base = {leaderLike:40,output:40,physique:45,mental:40,social:30,antiAI:15,salary:20};
   var eduO   = EDU.find(function(o){return o.id===pc.edu;});
   var carO   = CAREER.find(function(o){return o.id===pc.career;});
   var famO   = FAMILY.find(function(o){return o.id===pc.family;});
@@ -1018,16 +1019,18 @@ function applyFx(fx, mult){
 
 function dailyDecay(){
   var p = gs.p;
-  // 每日基础衰减（比之前略收窄，但保持一定压力）
-  var decay = {leaderLike:-4, output:-5, salary:-1};
-  // 低状态时有额外惩罚，但有上限，不会一回合暴死
-  if(p.physique < 25) decay.mental  = (decay.mental||0)  - 3;  // 体质差→心情下降
-  if(p.mental < 25)   decay.output  = (decay.output||0)  - 3;  // 心情差→产出下降
-  if(p.leaderLike < 30 && !p.buffs.alliance)
-                      decay.leaderLike = (decay.leaderLike||0) - 2; // 好感低→雪球但温和
-  // 每次衰减单个值不超过-10，避免单回合暴死
+  // 每日基础衰减：leaderLike和output的衰减放缓，给玩家足够缓冲
+  // leaderLike: -3/天（初始30，死亡线20，约3天缓冲）
+  // output: -4/天（初始30，死亡线20，约2.5天缓冲，但主动行动可轻松补回）
+  var decay = {leaderLike:-3, output:-4, salary:-1};
+  // 低状态时有额外惩罚，但触发阈值下调，避免初始状态就触发雪球
+  if(p.physique < 20) decay.mental  = (decay.mental||0)  - 3;  // 体质差→心情下降（阈值20）
+  if(p.mental < 20)   decay.output  = (decay.output||0)  - 3;  // 心情差→产出下降（阈值20）
+  if(p.leaderLike < 24 && !p.buffs.alliance)
+                      decay.leaderLike = (decay.leaderLike||0) - 2; // 好感低→雪球（阈值24，死亡线20，只有快死时才触发）
+  // 每次衰减单个值不超过-8，避免单回合暴死
   Object.keys(decay).forEach(function(k){
-    if(decay[k] < -10) decay[k] = -10;
+    if(decay[k] < -8) decay[k] = -8;
   });
   applyFx(decay, 1);
   // Buff 倒计时
@@ -1060,18 +1063,22 @@ function checkDeath(){
 
 function getWarnings(){
   var p = gs.p, w = [];
-  // 领导满意度（死亡线20）：3级预警（初始值30，留足缓冲）
+  // 领导满意度（死亡线20）：3级预警
+  // 衰减-3/天；初始30；偏低线27→约1天后触发，告急线24→约2天后触发，🚨线21→约3天后触发
   if(p.leaderLike < 22 && !p.buffs.alliance)
     w.push('🚨 【即将被裁！】领导满意度触底，下一步可能被叫去小会议室');
-  else if(p.leaderLike < 26 && !p.buffs.alliance)
+  else if(p.leaderLike < 25 && !p.buffs.alliance)
     w.push('⚠️ 领导满意度告急，再跌就要被裁了');
-  else if(p.leaderLike < 30)
+  else if(p.leaderLike < 28)
     w.push('📉 领导满意度偏低，注意维护关系');
-  // 个人产出（死亡线20）：2级预警
+  // 个人产出（死亡线20）：3级预警
+  // 衰减-4/天；初始30；偏低线27→约0.75天后触发，告急线24→约1.5天后触发，🚨线22→约2天后触发
   if(p.output < 22)
     w.push('🚨 【即将被裁！】产出极低，已被列为裁员重点对象');
-  else if(p.output < 30)
+  else if(p.output < 25)
     w.push('⚠️ 产出值告急，继续下降将触发裁员');
+  else if(p.output < 28)
+    w.push('📉 产出偏低，主动行动才能保住位置');
   // 对抗AI值：3级预警（finalSettle死亡线<20，第3天起开始提醒）
   if(!p.buffs.alliance){
     if(p.antiAI < 12)
